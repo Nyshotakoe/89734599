@@ -1,0 +1,3130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ХрониAR — 3D-реконструкция архитектуры Нижнего Новгорода 1896 года</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Babel для компиляции JSX на лету -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Карта импортов: единая версия React для самого приложения и иконок Lucide -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+      "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0"
+    }
+  }
+  </script>
+</head>
+<body class="bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect, useRef, useCallback } from 'react';
+    import ReactDOM from 'react-dom/client';
+    import {
+      Smartphone,
+      Compass,
+      MapPin,
+      CheckCircle2,
+      Sparkles,
+      Download,
+      Play,
+      Pause,
+      Eye,
+      Moon,
+      Sun,
+      Wifi,
+      Coffee,
+      QrCode,
+      ChevronRight,
+      ChevronDown,
+      Star,
+      Copy,
+      Check,
+      Unlock,
+      Lock,
+      Navigation,
+      Headphones,
+      MoveHorizontal,
+      Ticket,
+      X,
+      RotateCcw,
+      Layers,
+      Box,
+      Maximize2,
+      EyeOff,
+      ZoomIn,
+      ZoomOut,
+      Search,
+      Award,
+      Zap,
+      ShieldCheck,
+      Cpu,
+      HardDrive,
+      Volume2,
+      HelpCircle,
+      ArrowRight
+    } from 'lucide-react';
+
+    // ==========================================
+    // КАТАЛОГ 10 АРХИТЕКТУРНЫХ ОБЪЕКТОВ
+    // ==========================================
+
+    const AR_LOCATIONS = [
+      {
+        id: 'arch',
+        number: '01',
+        title: 'Триумфальная арка 1896 года',
+        shortTitle: 'Триумфальная арка',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'ул. Рождественская / пл. Маркина',
+        architect: 'Академик Ф. О. Шехтель',
+        years: '1896 – 1902 гг.',
+        scale: 'Масштаб 1:1 • Высота 24 м',
+        styleTag: 'Неорусский модерн',
+        triangles: { LOD0: '22 000', LOD1: '9 800', LOD2: '3 400' },
+        s3Size: '3.8 МБ (LZ4)',
+        isFreeDemo: true,
+        mapCoords: { x: 46, y: 46 },
+        audioDuration: '02:15',
+        nearestCafeId: 'rozh',
+        distanceToCafe: '120 м (2 мин пешком)',
+        summary:
+          'Парадные Царские ворота в неорусском шатровом стиле, возведенные по чертежам академика Фёдора Шехтеля к открытию XVI Всероссийской промышленной и художественной выставки 1896 года.',
+        curiousFact:
+          'Несмотря на вид монументальной белокаменной крепости, вся 24-метровая арка была искусно срублена из дерева, покрыта штукатуркой и украшена резными гербами.',
+        audioTranscript:
+          '«Посмотрите вверх: прямо перед вами на высоту двадцати четырех метров поднимается шатровая башня Триумфальной арки Фёдора Шехтеля. В мае 1896 года под этим сводом проходили экипажи гостей Всероссийской выставки, прибывавших на пароходах к пристаням Рождественской стороны...»',
+        hotspots: [
+          {
+            id: 'arch-1',
+            pos3D: [-2.1, 5.2, 0.7],
+            label: 'Шатровый ярус',
+            title: 'Высотная шатровая башня Шехтеля',
+            fact: 'Асимметричная композиция с высоким левым шатром и боярским зубчатым теремом справа стала эталоном русского модерна.',
+            question: 'Из какого материала на самом деле была построена эта грандиозная 24-метровая арка?',
+            options: [
+              'Из резного дерева с отделкой под белый камень',
+              'Из уральского белого мрамора',
+              'Из чугунных литых секций'
+            ],
+            correctIndex: 0
+          },
+          {
+            id: 'arch-2',
+            pos3D: [0.0, 3.1, 0.9],
+            label: 'Гербовый свод',
+            title: 'Центральный свод и герб губернии',
+            fact: 'Над проездной аркой размещался рельефный щит с шагающим нижегородским оленем и двуглавым орлом.',
+            question: 'К какому историческому событию 1896 года возвели Триумфальную арку?',
+            options: [
+              'К Всероссийской промышленно-художественной выставке',
+              'К открытию Нижегородского оперного театра',
+              'К 500-летию Нижегородского кремля'
+            ],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'belltower',
+        number: '02',
+        title: 'Староярмарочная колокольня',
+        shortTitle: 'Колокольня Монферрана',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'Ярмарочный проезд, Спасский собор',
+        architect: 'Огюст Монферран',
+        years: '1822 – 1906 гг.',
+        scale: 'Масштаб 1:1 • Высота 54 м',
+        styleTag: 'Высокий ампир',
+        triangles: { LOD0: '25 000', LOD1: '11 200', LOD2: '3 900' },
+        s3Size: '4.2 МБ (LZ4)',
+        isFreeDemo: true,
+        mapCoords: { x: 22, y: 26 },
+        audioDuration: '02:40',
+        nearestCafeId: 'fair',
+        distanceToCafe: '180 м (3 мин пешком)',
+        summary:
+          'Изящная четырехъярусная колокольня Спасского Староярмарочного собора в стиле высокого ампира, созданная автором Исаакиевского собора Огюстом Монферраном.',
+        curiousFact:
+          'Весенние паводки Оки и Волги постепенно подмывали песчаное основание, и в 1906 году историческую колокольню Монферрана разобрали, чтобы спасти главный собор.',
+        audioTranscript:
+          '«Вы находитесь у главного архитектурного ориентира Нижегородской ярмарки XIX столетия. Огюст Монферран спроектировал этот ансамбль в духе классического ампира с белоснежными колоннадами и стройной ротондой звона...»',
+        hotspots: [
+          {
+            id: 'bell-1',
+            pos3D: [0.0, 5.4, 0.8],
+            label: 'Ротонда звона',
+            title: 'Ярус звона и золоченый шпиль',
+            fact: 'Колокольный благовест возвещал купцам со всей Российской империи и Востока об открытии ярмарочного торга.',
+            question: 'Какой знаменитый собор в Санкт-Петербурге построил автор этой колокольни Огюст Монферран?',
+            options: ['Исаакиевский собор', 'Казанский собор', 'Смольный собор'],
+            correctIndex: 0
+          },
+          {
+            id: 'bell-2',
+            pos3D: [0.0, 1.6, 2.0],
+            label: 'Портик ампир',
+            title: 'Белоснежная колоннада нижнего яруса',
+            fact: 'Четырехколонный тосканский портик служил парадным входом со стороны Главного ярмарочного дома.',
+            question: 'Почему оригинальная колокольня Монферрана была разобрана в 1906 году?',
+            options: [
+              'Из-за подмыва грунтов весенними разливами рек',
+              'Для прокладки линии фуникулера',
+              'Её перенесли на территорию Кремля'
+            ],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'funicular',
+        number: '03',
+        title: 'Кремлевский фуникулер (Элеватор)',
+        shortTitle: 'Кремлевский элеватор',
+        routeCategory: 'Кремль и Рождественская',
+        routeId: 'route-kremlin',
+        address: 'Кремлевский откос у Северной башни',
+        architect: 'Инженер Р. К. фон Гартман',
+        years: '1896 – 1926 гг.',
+        scale: 'Масштаб 1:1 • Анимация вагона',
+        styleTag: 'Инженерный модерн',
+        triangles: { LOD0: '24 500', LOD1: '10 400', LOD2: '3 600' },
+        s3Size: '4.5 МБ (LZ4)',
+        isFreeDemo: true,
+        mapCoords: { x: 64, y: 40 },
+        audioDuration: '01:55',
+        nearestCafeId: 'kreml',
+        distanceToCafe: '90 м (1 мин пешком)',
+        summary:
+          'Инженерное чудо 1896 года — исторический Кремлевский элеватор с наклонным виадуком, поднимавший пассажиров с улицы Рождественской прямо к стенам Кремля.',
+        curiousFact:
+          'Вагончики двигались без электромоторов за счет силы тяжести воды: на верхней станции в бак вагона заливали воду, и он, спускаясь вниз, тянул тросом встречный вагон наверх.',
+        audioTranscript:
+          '«Посмотрите на склон у Северной башни Кремля: по чугунным рельсам плавно скользят расписные вагончики 1896 года! Нижегородцы называли фуникулер "элеватором". Весь секрет его работы крылся в остроумной системе водяного балласта...»',
+        hotspots: [
+          {
+            id: 'fun-1',
+            pos3D: [-0.3, 2.3, 1.0],
+            label: 'Вагончик 1896 г.',
+            title: 'Вагон на водяном балласте',
+            fact: 'Внутри вагончика располагались купе первого и второго класса, а также открытые террасы с видом на Стрелку.',
+            question: 'За счет чего двигались вагончики Кремлевского элеватора в 1896 году?',
+            options: [
+              'За счет тяжести воды в балластном баке верхнего вагона',
+              'На паровой тяге от канатной лебедки',
+              'От дизельного генератора в башне Кремля'
+            ],
+            correctIndex: 0
+          },
+          {
+            id: 'fun-2',
+            pos3D: [2.3, 4.4, 0.5],
+            label: 'Верхняя станция',
+            title: 'Павильон у Северной башни Кремля',
+            fact: 'Подъем занимал всего полторы минуты и соединял нижнюю Рождественскую линию трамвая с верхней кремлевской.',
+            question: 'Как сами нижегородцы в конце XIX века называли этот рельсовый подъемник?',
+            options: ['Элеватор', 'Самокат', 'Аэроплан'],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'main_fair_house',
+        number: '04',
+        title: 'Главный ярмарочный дом Бетанкура',
+        shortTitle: 'Дом Бетанкура (1822)',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'ул. Совнаркомовская, 13 (исторический фундамент)',
+        architect: 'Августин Бетанкур',
+        years: '1822 – 1889 гг.',
+        scale: 'Масштаб 1:1 • Длина фасада 90 м',
+        styleTag: 'Русский классицизм',
+        triangles: { LOD0: '23 800', LOD1: '10 100', LOD2: '3 400' },
+        s3Size: '4.0 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 26, y: 36 },
+        audioDuration: '02:35',
+        nearestCafeId: 'fair',
+        distanceToCafe: '110 м (2 мин пешком)',
+        summary:
+          'Первозданный классицистический дворец Главного дома Нижегородской ярмарки, возведенный испанским инженером на русской службе Августином Бетанкуром за 68 лет до здания Третьякова.',
+        curiousFact:
+          'Именно этот белоколонный дворец с купольным бельведером и двумя боковыми флигелями изображен на всех старинных литографиях ярмарки эпохи Пушкина.',
+        audioTranscript:
+          '«Мало кто знает, что на месте знакомого всем теремного Главного ярмарочного дома почти семь десятилетий стоял величественный классический дворец Августина Бетанкура с восьмиколонной лоджией и бельведером...»',
+        hotspots: [
+          {
+            id: 'bet-1',
+            pos3D: [0.0, 2.2, 1.5],
+            label: 'Колоннада лоджии',
+            title: 'Восьмиколонный портик Бетанкура',
+            fact: 'На балконе за белоснежными колоннами играл ярмарочный оркестр, а внутри проходили торжественные балы губернатора.',
+            question: 'Кто спроектировал первый каменный ансамбль Нижегородской ярмарки в 1817–1822 годах?',
+            options: ['Августин Бетанкур', 'Бартоломео Растрелли', 'Василий Баженов'],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'rotunda_shukhov',
+        number: '05',
+        title: 'Ротонда и башня В. Г. Шухова',
+        shortTitle: 'Ротонда Шухова',
+        routeCategory: 'Инженерные чудеса',
+        routeId: 'route-1896',
+        address: 'Выставочный городок 1896 г. (Канавино)',
+        architect: 'Инженер В. Г. Шухов',
+        years: '1896 – 1905 гг.',
+        scale: 'Масштаб 1:1 • Диаметр 68 м',
+        styleTag: 'Авангард инженерии',
+        triangles: { LOD0: '21 400', LOD1: '9 300', LOD2: '3 100' },
+        s3Size: '3.9 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 16, y: 58 },
+        audioDuration: '02:50',
+        nearestCafeId: 'strelka',
+        distanceToCafe: '220 м (3 мин пешком)',
+        summary:
+          'Первое в мире здание с сетчатым стальным перекрытием-оболочкой и висячей мембранной кровлей диаметром 68 метров рядом с первой в мире гиперболоидной водонапорной башней.',
+        curiousFact:
+          'Крыша в центре ротонды Шухова держалась на тонкой стальной мембране толщиной 1,5 миллиметра без единой тяжелой балки!',
+        audioTranscript:
+          '«В 1896 году именно здесь, в Нижнем Новгороде, инженер Владимир Шухов совершил мировую архитектурную революцию, впервые показав человечеству стальные сетчатые оболочки и гиперболоидную башню...»',
+        hotspots: [
+          {
+            id: 'shukh-1',
+            pos3D: [-0.6, 3.6, 1.3],
+            label: 'Мембранный купол',
+            title: 'Первая в мире висячая стальная оболочка',
+            fact: 'Конструкция Шухова опередила мировую архитектуру XX века на полстолетия и стала прообразом современных стадионов.',
+            question: 'Каков был диаметр уникального круглого павильона Шухова на выставке 1896 года?',
+            options: ['68 метров', '15 метров', '200 метров'],
+            correctIndex: 0
+          },
+          {
+            id: 'shukh-2',
+            pos3D: [2.6, 4.5, 0.2],
+            label: 'Гиперболоид',
+            title: 'Первая гиперболоидная башня Шухова',
+            fact: 'Ажурная башня собрана из прямых стальных уголков, образующих за счет наклона изогнутую поверхность вращения.',
+            question: 'Для чего служила гиперболоидная башня Шухова на Выставке 1896 года?',
+            options: [
+              'Водонапорная башня с обзорной площадкой на вершине',
+              'Радиомачта дальней связи',
+              'Парашютная вышка'
+            ],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'imperial_pavilion',
+        number: '06',
+        title: 'Императорский павильон Выставки 1896 г.',
+        shortTitle: 'Императорский терем',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'Парк им. 1 Мая (Царский сквер Выставки)',
+        architect: 'Академик А. Н. Померанцев',
+        years: '1896 – 1898 гг.',
+        scale: 'Масштаб 1:1 • Резной дворец',
+        styleTag: 'Русский теремной стиль',
+        triangles: { LOD0: '23 600', LOD1: '10 000', LOD2: '3 400' },
+        s3Size: '4.1 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 12, y: 68 },
+        audioDuration: '03:05',
+        nearestCafeId: 'fair',
+        distanceToCafe: '240 м (3 мин пешком)',
+        summary:
+          'Роскошный деревянный дворец-терем с высокой бочкой-кровлей, кокошниками и филигранной сквозной резьбой, построенный автором московского ГУМа Александром Померанцевым.',
+        curiousFact:
+          'В июле 1896 года павильон принимал императорскую чету во время трехдневного визита на Всероссийскую выставку.',
+        audioTranscript:
+          '«Перед вами сказочный русский терем, созданный академиком Померанцевым. Каждая башенка, причелина и резной конек этого павильона были выполнены вручную лучшими мастерами...»',
+        hotspots: [
+          {
+            id: 'imp-1',
+            pos3D: [0.0, 4.6, 1.0],
+            label: 'Кровля-бочка',
+            title: 'Кружевная резьба и шатровая башня',
+            fact: 'Узоры павильона сочетали мотивы древнерусского зодчества XVII века с передовым электрическим освещением.',
+            question: 'Какое знаменитое здание на Красной площади в Москве построил архитектор А. Н. Померанцев?',
+            options: ['Верхние торговые ряды (ГУМ)', 'Исторический музей', 'Манеж'],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'chinese_rows',
+        number: '07',
+        title: 'Китайские ряды Нижегородской ярмарки',
+        shortTitle: 'Китайские ряды',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'Бетанкуровский канал / Ярмарочная пл.',
+        architect: 'А. Бетанкур, О. Монферран',
+        years: '1822 – 1914 гг.',
+        scale: 'Масштаб 1:1 • Восточный квартал',
+        styleTag: 'Шинуазри (Пагоды)',
+        triangles: { LOD0: '22 700', LOD1: '9 500', LOD2: '3 200' },
+        s3Size: '3.9 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 32, y: 28 },
+        audioDuration: '02:25',
+        nearestCafeId: 'strelka',
+        distanceToCafe: '150 м (2 мин пешком)',
+        summary:
+          'Четыре уникальных торговых корпуса с изогнутыми многоярусными крышами в виде китайских пагод, где определялись оптовые цены на караванный чай для всей России и Европы.',
+        curiousFact:
+          'Именно в Китайских рядах купцы дегустировали байховый и цветочный чай, доставленный верблюжьими караванами через Кяхту и всю Сибирь.',
+        audioTranscript:
+          '«Присмотритесь к загнутым кверху золоченым углам крыш: это знаменитые Китайские ряды! В XIX веке здесь заключались многомиллионные сделки на поставку кяхтинского чая...»',
+        hotspots: [
+          {
+            id: 'chin-1',
+            pos3D: [0.0, 4.1, 1.2],
+            label: 'Крыша-пагода',
+            title: 'Чайная столица Российской империи',
+            fact: 'Корпуса Китайских рядов образовывали парадный полукруг по берегам Обводного канала перед Главным домом.',
+            question: 'Какой главный восточный товар продавался оптом в Китайских рядах ярмарки?',
+            options: ['Караванный кяхтинский чай', 'Фарфоровые вазы династии Мин', 'Шелковые веера'],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'machinery_hall',
+        number: '08',
+        title: 'Павильон Машинного отдела 1896 г.',
+        shortTitle: 'Машинный дворец',
+        routeCategory: 'Инженерные чудеса',
+        routeId: 'route-1896',
+        address: 'Центральная площадь Выставки 1896 г.',
+        architect: 'Академик А. Н. Померанцев',
+        years: '1896 – 1899 гг.',
+        scale: 'Масштаб 1:1 • Стеклянный купол',
+        styleTag: 'Индустриальный модерн',
+        triangles: { LOD0: '25 000', LOD1: '11 000', LOD2: '3 800' },
+        s3Size: '4.4 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 20, y: 48 },
+        audioDuration: '02:45',
+        nearestCafeId: 'strelka',
+        distanceToCafe: '190 м (3 мин пешком)',
+        summary:
+          'Грандиозный дворец из металла и стекла с гигантским граненым куполом и четырьмя решетчатыми башнями-пилонами, где демонстрировались первый русский автомобиль и грозоотметчик Попова.',
+        curiousFact:
+          'По вечерам стеклянный купол Машинного отдела сиял сотнями дуговых электрических прожекторов, отражаясь в водах выставочного пруда.',
+        audioTranscript:
+          '«Вы стоите перед главным индустриальным дворцом Российской империи конца XIX века! Под этим огромным стеклянным куполом работали паровые машины, динамо-генераторы и первый отечественный автомобиль Яковлева и Фрезе...»',
+        hotspots: [
+          {
+            id: 'mach-1',
+            pos3D: [0.0, 5.1, 1.0],
+            label: 'Стеклянный купол',
+            title: 'Металло-стеклянный купол и башни',
+            fact: 'Площадь павильона превышала 10 000 кв. метров, а его стальной каркас собирался по передовым мостовым технологиям.',
+            question: 'Какое знаменитое изобретение А. С. Попова демонстрировалось на выставке 1896 года?',
+            options: [
+              'Прибор для регистрации электрических колебаний (радиоприемник)',
+              'Первый цветной телевизор',
+              'Лазерный телеграф'
+            ],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'simeon_church',
+        number: '09',
+        title: 'Храм Симеона Столпника в Кремле',
+        shortTitle: 'Храм в Кремле',
+        routeCategory: 'Кремль и Рождественская',
+        routeId: 'route-kremlin',
+        address: 'Нижегородский Кремль, Ивановский съезд',
+        architect: 'Посадское каменное зодчество',
+        years: '1743 – 1928 гг.',
+        scale: 'Масштаб 1:1 • Пятиглавие и шатер',
+        styleTag: 'Русское барокко',
+        triangles: { LOD0: '24 900', LOD1: '10 600', LOD2: '3 700' },
+        s3Size: '4.2 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 74, y: 46 },
+        audioDuration: '02:30',
+        nearestCafeId: 'kreml',
+        distanceToCafe: '130 м (2 мин пешком)',
+        summary:
+          'Живописный пятиглавый храм с трапезной и высокой шатровой колокольней на крутом склоне Ивановского съезда внутри Нижегородского кремля.',
+        curiousFact:
+          'В 2020–2023 годах на историческом месте храма были проведены масштабные археологические раскопки, раскрывшие древний фундамент XVIII века.',
+        audioTranscript:
+          '«Спускаемся по древнему Ивановскому съезду внутри Кремля: справа от вас в масштабе один к одному вырастают белоснежные стены и пять глав старинной Симеоновской церкви...»',
+        hotspots: [
+          {
+            id: 'sim-1',
+            pos3D: [-1.8, 4.9, 0.7],
+            label: 'Колокольня храма',
+            title: 'Шатровая колокольня над съездом',
+            fact: 'Силуэт колокольни и пяти куполов встречал всех путников, поднимавшихся в Кремль от Нижнего посада и пристаней.',
+            question: 'Вдоль какого исторического съезда внутри Кремля располагался этот храм?',
+            options: ['Вдоль Ивановского съезда', 'Вдоль Зеленского съезда', 'Вдоль Похвалихинского съезда'],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 'central_asia',
+        number: '10',
+        title: 'Павильон Среднеазиатского отдела 1896 г.',
+        shortTitle: 'Восточный дворец',
+        routeCategory: 'Выставка и Ярмарка 1896',
+        routeId: 'route-1896',
+        address: 'Восточный сектор Выставки 1896 г.',
+        architect: 'Академик А. Н. Померанцев',
+        years: '1896 – 1898 гг.',
+        scale: 'Масштаб 1:1 • 4 минарета и купол',
+        styleTag: 'Мавританский стиль',
+        triangles: { LOD0: '24 100', LOD1: '10 200', LOD2: '3 500' },
+        s3Size: '4.1 МБ (LZ4)',
+        isFreeDemo: false,
+        mapCoords: { x: 35, y: 62 },
+        audioDuration: '02:20',
+        nearestCafeId: 'pokr',
+        distanceToCafe: '160 м (2 мин пешком)',
+        summary:
+          'Сказочный восточный дворец с ребристым лазурно-золотым куполом, четырьмя стройными минаретами по углам и расписными персидскими порталами-айванами.',
+        curiousFact:
+          'Фасады павильона были покрыты тончайшим восточным орнаментом, воспроизводящим майолику древнего Самарканда и Бухары.',
+        audioTranscript:
+          '«Настоящая восточная сказка посреди Нижнего Новгорода 1896 года! Четыре стройных минарета и бирюзовый ребристый купол павильона Средней Азии поражали воображение каждого гостя выставки...»',
+        hotspots: [
+          {
+            id: 'asia-1',
+            pos3D: [0.0, 4.9, 0.9],
+            label: 'Лазурный купол',
+            title: 'Ребристый купол и портал-айван',
+            fact: 'В архитектуре павильона академик Померанцев соединил мотивы медресе Самарканда и дворцов Бухарского эмирата.',
+            question: 'Сколько угловых башен-минаретов окружало купол Среднеазиатского павильона?',
+            options: ['Четыре минарета по углам здания', 'Один центральный минарет', 'Двенадцать башен'],
+            correctIndex: 0
+          }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // 5 КОФЕЕН-ПАРТНЕРОВ
+    // ==========================================
+
+    const PARTNER_CAFES = [
+      {
+        id: 'rozh',
+        name: 'Кофейня «Купеческая чашка»',
+        address: 'ул. Рождественская, 24 (Блиновский пассаж)',
+        specialty: 'Раф «Кяхтинский пряник» и ремесленные круассаны',
+        discount: '10%',
+        promoCode: 'HRONIAR-ROZH10',
+        nearLocation: 'Триумфальная арка 1896 г.',
+        walkTime: '2 мин пешком (120 м)',
+        rating: '4.9',
+        mapCoords: { x: 50, y: 50 }
+      },
+      {
+        id: 'fair',
+        name: 'Ростерия «Ярмарочный Дворъ»',
+        address: 'Ярмарочный проезд, 8 (у Главного дома)',
+        specialty: 'Фильтр-кофе свежей обжарки и калачи с маслом',
+        discount: '10%',
+        promoCode: 'HRONIAR-FAIR10',
+        nearLocation: 'Староярмарочная колокольня и Дом Бетанкура',
+        walkTime: '3 мин пешком (180 м)',
+        rating: '4.9',
+        mapCoords: { x: 24, y: 31 }
+      },
+      {
+        id: 'kreml',
+        name: 'Эспрессо-бар «Элеватор 1896»',
+        address: 'Кремлевский бульвар, 3 (у Северной башни)',
+        specialty: 'Капучино на топленом молоке и ягодные тарты',
+        discount: '10%',
+        promoCode: 'HRONIAR-KREML10',
+        nearLocation: 'Кремлевский фуникулер и Храм Симеона',
+        walkTime: '1 мин пешком (90 м)',
+        rating: '5.0',
+        mapCoords: { x: 68, y: 43 }
+      },
+      {
+        id: 'strelka',
+        name: 'Пекарня & Кофе «У Шухова на Стрелке»',
+        address: 'ул. Стрелка, 14 (набережная Волги)',
+        specialty: 'Сбитень на травах, эспрессо-тоник и слойки с грушей',
+        discount: '10%',
+        promoCode: 'HRONIAR-STRELKA10',
+        nearLocation: 'Ротонда Шухова и Машинный отдел',
+        walkTime: '3 мин пешком (190 м)',
+        rating: '4.8',
+        mapCoords: { x: 30, y: 42 }
+      },
+      {
+        id: 'pokr',
+        name: 'Кофе & Книги «Старый Посад»',
+        address: 'ул. Большая Покровская, 18',
+        specialty: 'Авторский латте «Сосновый бор» и домашний чизкейк',
+        discount: '10%',
+        promoCode: 'HRONIAR-POKR10',
+        nearLocation: 'Нижегородский Кремль и верхний посад',
+        walkTime: '2 мин пешком (140 м)',
+        rating: '4.9',
+        mapCoords: { x: 78, y: 62 }
+      }
+    ];
+
+    const FAQ_ITEMS = [
+      {
+        q: 'Почему приложение весит всего 45 МБ, если внутри 10 детальных 3D-зданий?',
+        a: 'В «ХрониAR» используется облачная клиент-серверная архитектура S3. Вы скачиваете легкий клиент (45 МБ вместо 2,5 ГБ), а 3D-модель конкретного здания со сжатием LZ4 и запеченными тенями (Baked Lightmaps) подгружается за 1,5 секунды по сети 4G, когда вы подходите к локации.'
+      },
+      {
+        q: 'Как достигается точность посадки 3D-здания до 15 см?',
+        a: 'Вместо обычного GPS (который дает погрешность 10–20 метров в плотной застройке) наш движок использует систему визуального позиционирования VPS: камера распознает геометрию сохранившихся соседних фасадов и жестко фиксирует 3D-реконструкцию в масштабе 1:1 на частоте 60 FPS.'
+      },
+      {
+        q: 'Чем сюжетный квест за 249 ₽ отличается от бесплатного демо-режима?',
+        a: 'В бесплатном режиме открыты 3 знаковые локации для знакомства с технологией. Покупка полного маршрута за 249 ₽ (по СБП за 10 секунд) открывает все 10 памятников архитектуры, 45 минут профессиональной дикторской озвучки, квест-викторину на фасадах и 5 купонов на скидку 10% в кофейнях.'
+      },
+      {
+        q: 'Можно ли гулять по маршруту вечером или в сумерках?',
+        a: 'Да! В приложении реализован специальный вечерний режим с теплой архитектурной подсветкой 3D-фасадов и алгоритмом стабилизации трекинга камеры при слабом освещении.'
+      }
+    ];
+
+    // ==========================================
+    // 3D МАТЕМАТИКА И ПРОЦЕДУРНЫЙ ГЕНЕРАТОР
+    // ==========================================
+
+    function shadeHexColor(hex, factor) {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean, 16);
+      const r = Math.min(255, Math.max(0, Math.round(((num >> 16) & 255) * factor)));
+      const g = Math.min(255, Math.max(0, Math.round(((num >> 8) & 255) * factor)));
+      const b = Math.min(255, Math.max(0, Math.round((num & 255) * factor)));
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function addBox(faces, cx, cy, cz, w, h, d, color, opts = {}) {
+      const hw = w / 2;
+      const hh = h / 2;
+      const hd = d / 2;
+      const v = [
+        [cx - hw, cy - hh, cz - hd],
+        [cx + hw, cy - hh, cz - hd],
+        [cx + hw, cy + hh, cz - hd],
+        [cx - hw, cy + hh, cz - hd],
+        [cx - hw, cy - hh, cz + hd],
+        [cx + hw, cy - hh, cz + hd],
+        [cx + hw, cy + hh, cz + hd],
+        [cx - hw, cy + hh, cz + hd]
+      ];
+      faces.push({ verts: [v[4], v[5], v[6], v[7]], color, normal: [0, 0, 1], ...opts });
+      faces.push({ verts: [v[1], v[0], v[3], v[2]], color, normal: [0, 0, -1], ...opts });
+      faces.push({ verts: [v[0], v[4], v[7], v[3]], color, normal: [-1, 0, 0], ...opts });
+      faces.push({ verts: [v[5], v[1], v[2], v[6]], color, normal: [1, 0, 0], ...opts });
+      faces.push({ verts: [v[7], v[6], v[2], v[3]], color: opts.roofColor || color, normal: [0, 1, 0], ...opts });
+    }
+
+    function addPyramid(faces, cx, baseY, cz, w, h, d, color, opts = {}) {
+      const hw = w / 2;
+      const hd = d / 2;
+      const apex = [cx, baseY + h, cz];
+      const b0 = [cx - hw, baseY, cz + hd];
+      const b1 = [cx + hw, baseY, cz + hd];
+      const b2 = [cx + hw, baseY, cz - hd];
+      const b3 = [cx - hw, baseY, cz - hd];
+
+      faces.push({ verts: [b0, b1, apex], color, normal: [0, 0.4, 0.9], ...opts });
+      faces.push({ verts: [b1, b2, apex], color, normal: [0.9, 0.4, 0], ...opts });
+      faces.push({ verts: [b2, b3, apex], color, normal: [0, 0.4, -0.9], ...opts });
+      faces.push({ verts: [b3, b0, apex], color, normal: [-0.9, 0.4, 0], ...opts });
+    }
+
+    function addCylinder(faces, cx, baseY, cz, radiusTop, radiusBottom, h, segments, color, opts = {}) {
+      for (let i = 0; i < segments; i++) {
+        const a1 = (i / segments) * Math.PI * 2;
+        const a2 = ((i + 1) / segments) * Math.PI * 2;
+        const x1b = cx + Math.cos(a1) * radiusBottom;
+        const z1b = cz + Math.sin(a1) * radiusBottom;
+        const x2b = cx + Math.cos(a2) * radiusBottom;
+        const z2b = cz + Math.sin(a2) * radiusBottom;
+
+        const x1t = cx + Math.cos(a1) * radiusTop;
+        const z1t = cz + Math.sin(a1) * radiusTop;
+        const x2t = cx + Math.cos(a2) * radiusTop;
+        const z2t = cz + Math.sin(a2) * radiusTop;
+
+        const midA = (a1 + a2) / 2;
+        faces.push({
+          verts: [
+            [x1b, baseY, z1b],
+            [x2b, baseY, z2b],
+            [x2t, baseY + h, z2t],
+            [x1t, baseY + h, z1t]
+          ],
+          color,
+          normal: [Math.cos(midA), 0.2, Math.sin(midA)],
+          ...opts
+        });
+      }
+    }
+
+    function addDome(faces, cx, baseY, cz, radius, h, segments, rings, color, opts = {}) {
+      for (let r = 0; r < rings; r++) {
+        const t1 = (r / rings) * (Math.PI / 2);
+        const t2 = ((r + 1) / rings) * (Math.PI / 2);
+        const y1 = baseY + Math.sin(t1) * h;
+        const y2 = baseY + Math.sin(t2) * h;
+        const rad1 = Math.cos(t1) * radius;
+        const rad2 = Math.cos(t2) * radius;
+
+        for (let s = 0; s < segments; s++) {
+          const a1 = (s / segments) * Math.PI * 2;
+          const a2 = ((s + 1) / segments) * Math.PI * 2;
+          const midA = (a1 + a2) / 2;
+          faces.push({
+            verts: [
+              [cx + Math.cos(a1) * rad1, y1, cz + Math.sin(a1) * rad1],
+              [cx + Math.cos(a2) * rad1, y1, cz + Math.sin(a2) * rad1],
+              [cx + Math.cos(a2) * rad2, y2, cz + Math.sin(a2) * rad2],
+              [cx + Math.cos(a1) * rad2, y2, cz + Math.sin(a1) * rad2]
+            ],
+            color,
+            normal: [Math.cos(midA) * Math.cos(t1), Math.sin(t1) + 0.3, Math.sin(midA) * Math.cos(t1)],
+            ...opts
+          });
+        }
+      }
+    }
+
+    function buildMonumentGeometry(locationId, isNightMode, lodLevel, animTime) {
+      const faces = [];
+      const segs = lodLevel === 'LOD2' ? 6 : lodLevel === 'LOD1' ? 10 : 14;
+
+      const creamStone = isNightMode ? '#d6c7b2' : '#fbf5e9';
+      const warmOchre = isNightMode ? '#c89d66' : '#f3d7a4';
+      const terraRoof = isNightMode ? '#7c2d12' : '#9a3412';
+      const copperRoof = isNightMode ? '#0f766e' : '#15803d';
+      const azureDome = isNightMode ? '#0284c7' : '#38bdf8';
+      const darkDome = isNightMode ? '#292524' : '#3f3b37';
+      const goldAccent = '#f59e0b';
+      const windowGlow = isNightMode ? '#fde047' : '#292524';
+      const plinthColor = isNightMode ? '#44403c' : '#78716c';
+
+      switch (locationId) {
+        case 'arch': {
+          addBox(faces, -2.1, 0.3, 0, 1.85, 0.6, 1.85, plinthColor);
+          addBox(faces, 2.1, 0.3, 0, 1.85, 0.6, 1.85, plinthColor);
+
+          addBox(faces, -2.1, 2.2, 0, 1.65, 3.2, 1.65, creamStone);
+          addBox(faces, 2.1, 2.2, 0, 1.65, 3.2, 1.65, creamStone);
+          addBox(faces, -2.1, 2.8, 0, 1.78, 0.25, 1.78, warmOchre);
+          addBox(faces, 2.1, 2.8, 0, 1.78, 0.25, 1.78, warmOchre);
+
+          addBox(faces, 0, 3.15, 0, 2.65, 1.15, 1.45, warmOchre);
+          addBox(faces, 0, 3.85, 0, 2.95, 0.35, 1.68, creamStone);
+
+          for (let i = 0; i < 8; i++) {
+            const a1 = (i / 8) * Math.PI;
+            const a2 = ((i + 1) / 8) * Math.PI;
+            const r = 1.25;
+            faces.push({
+              verts: [
+                [Math.cos(a1) * r, 1.65 + Math.sin(a1) * 1.15, 0.73],
+                [Math.cos(a2) * r, 1.65 + Math.sin(a2) * 1.15, 0.73],
+                [Math.cos(a2) * r, 1.65 + Math.sin(a2) * 1.15, -0.73],
+                [Math.cos(a1) * r, 1.65 + Math.sin(a1) * 1.15, -0.73]
+              ],
+              color: '#44403c',
+              normal: [0, -1, 0]
+            });
+          }
+
+          addBox(faces, 0, 3.25, 0.78, 0.9, 0.95, 0.16, goldAccent, { emissive: isNightMode ? 0.4 : 0.1 });
+          addBox(faces, 0, 3.25, -0.78, 0.9, 0.95, 0.16, goldAccent, { emissive: isNightMode ? 0.4 : 0.1 });
+
+          addBox(faces, -2.1, 4.35, 0, 1.42, 1.2, 1.42, warmOchre);
+          addCylinder(faces, -2.1, 4.95, 0, 0.62, 0.75, 0.85, segs, creamStone);
+          addPyramid(faces, -2.1, 5.8, 0, 1.35, 2.35, 1.35, terraRoof);
+          addCylinder(faces, -2.1, 8.1, 0, 0.04, 0.08, 0.75, 6, goldAccent, { emissive: 0.4 });
+
+          addBox(faces, 2.1, 4.15, 0, 1.38, 0.95, 1.38, warmOchre);
+          addPyramid(faces, 2.1, 4.62, 0, 1.55, 1.45, 1.55, terraRoof);
+          addCylinder(faces, 2.1, 6.05, 0, 0.04, 0.07, 0.65, 6, goldAccent, { emissive: 0.4 });
+
+          addBox(faces, -3.45, 1.35, 0, 1.1, 2.1, 1.2, creamStone);
+          addPyramid(faces, -3.45, 2.4, 0, 1.3, 1.1, 1.4, terraRoof);
+          addBox(faces, 3.45, 1.15, 0, 1.0, 1.7, 1.1, creamStone);
+          addPyramid(faces, 3.45, 2.0, 0, 1.2, 0.9, 1.3, terraRoof);
+
+          [-2.1, 2.1].forEach((bx) => {
+            addBox(faces, bx, 2.1, 0.84, 0.42, 0.85, 0.05, windowGlow, { emissive: isNightMode ? 0.85 : 0 });
+            addBox(faces, bx, 4.25, 0.73, 0.34, 0.55, 0.05, windowGlow, { emissive: isNightMode ? 0.85 : 0 });
+          });
+          break;
+        }
+
+        case 'belltower': {
+          addBox(faces, 0, 0.25, 0, 5.2, 0.5, 4.6, plinthColor);
+          addBox(faces, 0, 1.7, 0, 4.1, 2.5, 3.5, creamStone);
+          addBox(faces, 0, 3.05, 0, 4.4, 0.25, 3.8, warmOchre);
+          addPyramid(faces, 0, 3.17, 1.35, 3.4, 0.75, 1.2, terraRoof);
+
+          [-1.25, -0.45, 0.45, 1.25].forEach((colX) => {
+            addCylinder(faces, colX, 0.45, 1.9, 0.16, 0.19, 2.45, 8, '#ffffff');
+          });
+
+          addBox(faces, 0, 1.4, 1.78, 0.8, 1.7, 0.06, windowGlow, { emissive: isNightMode ? 0.7 : 0 });
+          [-1.45, 1.45].forEach((wx) => {
+            addBox(faces, wx, 1.65, 1.78, 0.45, 0.95, 0.06, windowGlow, { emissive: isNightMode ? 0.85 : 0 });
+          });
+
+          [-1.65, 1.65].forEach((tx) => {
+            addCylinder(faces, tx, 3.15, 0, 0.46, 0.5, 1.1, segs, creamStone);
+            addDome(faces, tx, 4.25, 0, 0.48, 0.52, segs, 4, darkDome);
+            addCylinder(faces, tx, 4.77, 0, 0.03, 0.05, 0.45, 6, goldAccent, { emissive: 0.45 });
+          });
+
+          addCylinder(faces, 0, 3.15, 0, 1.26, 1.35, 1.85, segs, creamStone);
+          addCylinder(faces, 0, 5.0, 0, 0.96, 1.05, 1.4, segs, warmOchre);
+
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            addBox(faces, Math.cos(a) * 1.0, 5.6, Math.sin(a) * 1.0, 0.28, 0.75, 0.28, windowGlow, {
+              emissive: isNightMode ? 0.9 : 0
+            });
+          }
+
+          addDome(faces, 0, 6.4, 0, 1.0, 1.1, segs, 5, darkDome);
+          addCylinder(faces, 0, 7.5, 0, 0.03, 0.12, 1.6, 6, goldAccent, { emissive: 0.55 });
+          break;
+        }
+
+        case 'funicular': {
+          const hillColor = isNightMode ? '#143325' : '#2f6f44';
+          for (let s = 0; s < 7; s++) {
+            const t = s / 6;
+            const hx = -2.4 + t * 4.8;
+            const hy = 0.25 + t * 1.65;
+            addBox(faces, hx, hy, -0.5, 1.05, hy * 2, 2.8, hillColor);
+          }
+
+          const brickColor = isNightMode ? '#7f1d1d' : '#b91c1c';
+          addBox(faces, 2.75, 3.8, -1.1, 1.65, 3.6, 1.65, brickColor);
+          addPyramid(faces, 2.75, 5.6, -1.1, 1.85, 1.35, 1.85, copperRoof);
+
+          addBox(faces, -2.55, 0.85, 0.35, 1.3, 1.5, 1.45, creamStone);
+          addPyramid(faces, -2.55, 1.6, 0.35, 1.5, 0.85, 1.65, terraRoof);
+
+          addBox(faces, 2.35, 4.1, 0.35, 1.45, 1.65, 1.55, warmOchre);
+          addPyramid(faces, 2.35, 4.92, 0.35, 1.68, 1.05, 1.75, terraRoof);
+
+          for (let i = 0; i < 10; i++) {
+            const f = i / 9;
+            const tx = -1.85 + f * 3.65;
+            const ty = 0.85 + f * 2.75;
+            addBox(faces, tx, ty / 2, 0.35, 0.22, ty, 0.95, plinthColor);
+            addBox(faces, tx, ty + 0.08, 0.35, 0.52, 0.14, 1.15, '#d6d3d1');
+          }
+
+          const wave = (Math.sin(animTime * 1.35) + 1) / 2;
+          const carX = -1.45 + wave * 2.85;
+          const carY = 1.35 + wave * 2.15;
+
+          addBox(faces, carX, carY, 0.42, 1.15, 0.45, 0.82, '#991b1b');
+          addBox(faces, carX, carY + 0.48, 0.42, 1.1, 0.58, 0.78, creamStone);
+          addBox(faces, carX, carY + 0.82, 0.42, 1.22, 0.14, 0.88, goldAccent);
+          [-0.32, 0, 0.32].forEach((ox) => {
+            addBox(faces, carX + ox, carY + 0.5, 0.83, 0.22, 0.34, 0.04, windowGlow, {
+              emissive: isNightMode ? 0.95 : 0.25
+            });
+          });
+          break;
+        }
+
+        case 'main_fair_house': {
+          addBox(faces, 0, 0.2, 0, 6.8, 0.4, 3.2, plinthColor);
+          addBox(faces, 0, 1.6, 0, 3.8, 2.4, 2.4, warmOchre);
+          addBox(faces, -2.55, 1.25, 0.2, 1.5, 1.7, 2.5, creamStone);
+          addBox(faces, 2.55, 1.25, 0.2, 1.5, 1.7, 2.5, creamStone);
+          addPyramid(faces, -2.55, 2.1, 0.2, 1.65, 0.65, 2.65, terraRoof);
+          addPyramid(faces, 2.55, 2.1, 0.2, 1.65, 0.65, 2.65, terraRoof);
+
+          [-1.4, -1.0, -0.6, -0.2, 0.2, 0.6, 1.0, 1.4].forEach((cx) => {
+            addCylinder(faces, cx, 0.4, 1.32, 0.11, 0.13, 2.3, 8, '#ffffff');
+          });
+
+          addBox(faces, 0, 2.9, 0.1, 4.0, 0.26, 2.7, creamStone);
+          addPyramid(faces, 0, 3.03, 0.4, 3.2, 0.85, 1.8, terraRoof);
+
+          addCylinder(faces, 0, 3.03, -0.1, 0.85, 0.9, 1.05, segs, creamStone);
+          addDome(faces, 0, 4.08, -0.1, 0.88, 0.85, segs, 4, copperRoof);
+          addCylinder(faces, 0, 4.93, -0.1, 0.03, 0.08, 0.95, 6, goldAccent, { emissive: 0.45 });
+
+          [-2.55, -1.1, 0, 1.1, 2.55].forEach((wx) => {
+            addBox(faces, wx, 1.15, 1.22, 0.42, 0.78, 0.06, windowGlow, { emissive: isNightMode ? 0.85 : 0 });
+          });
+          break;
+        }
+
+        case 'rotunda_shukhov': {
+          const rx = -0.85;
+          addCylinder(faces, rx, 0.15, 0, 2.65, 2.75, 0.3, segs, plinthColor);
+
+          for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * Math.PI * 2;
+            addCylinder(faces, rx + Math.cos(a) * 2.35, 0.3, Math.sin(a) * 2.35, 0.08, 0.1, 2.1, 6, creamStone);
+          }
+
+          addCylinder(faces, rx, 2.35, 0, 1.65, 2.55, 0.75, segs, terraRoof);
+          addCylinder(faces, rx, 0.3, 0, 0.65, 0.95, 3.3, segs, warmOchre);
+          addDome(faces, rx, 3.1, 0, 1.7, 0.95, segs, 4, azureDome, { emissive: isNightMode ? 0.35 : 0.1 });
+          addCylinder(faces, rx, 4.05, 0, 0.04, 0.1, 0.75, 6, goldAccent, { emissive: 0.4 });
+
+          const tx = 2.65;
+          addCylinder(faces, tx, 0.15, 0, 0.95, 1.05, 0.3, segs, plinthColor);
+          addCylinder(faces, tx, 0.45, 0, 0.42, 0.88, 2.4, segs, '#94a3b8');
+          addCylinder(faces, tx, 2.85, 0, 0.64, 0.42, 1.7, segs, '#cbd5e1');
+          [1.2, 2.0, 2.85, 3.7].forEach((ry) => {
+            addCylinder(faces, tx, ry, 0, 0.58, 0.58, 0.08, segs, goldAccent);
+          });
+          addCylinder(faces, tx, 4.55, 0, 0.72, 0.72, 0.95, segs, terraRoof);
+          addCylinder(faces, tx, 5.5, 0, 0.35, 0.35, 0.55, 8, creamStone);
+          addPyramid(faces, tx, 6.05, 0, 0.85, 0.75, 0.85, goldAccent);
+          break;
+        }
+
+        case 'imperial_pavilion': {
+          addBox(faces, 0, 0.3, 0, 5.0, 0.6, 3.2, plinthColor);
+          addBox(faces, 0, 1.85, 0, 3.8, 2.5, 2.4, warmOchre);
+
+          addBox(faces, -2.35, 1.5, 0, 1.1, 1.8, 2.0, creamStone);
+          addBox(faces, 2.35, 1.5, 0, 1.1, 1.8, 2.0, creamStone);
+          addPyramid(faces, -2.35, 2.4, 0, 1.35, 1.35, 2.2, terraRoof);
+          addPyramid(faces, 2.35, 2.4, 0, 1.35, 1.35, 2.2, terraRoof);
+
+          addBox(faces, 0, 1.3, 1.55, 1.45, 1.6, 1.1, creamStone);
+          addPyramid(faces, 0, 2.1, 1.55, 1.7, 1.4, 1.35, copperRoof);
+
+          addCylinder(faces, 0, 3.1, 0, 0.85, 1.75, 1.45, segs, terraRoof);
+          addBox(faces, 0, 4.55, 0, 2.4, 0.22, 1.4, goldAccent, { emissive: 0.3 });
+
+          addCylinder(faces, -0.9, 4.2, -0.2, 0.55, 0.62, 1.1, 8, warmOchre);
+          addPyramid(faces, -0.9, 5.3, -0.2, 1.3, 1.95, 1.3, copperRoof);
+          addCylinder(faces, -0.9, 7.25, -0.2, 0.04, 0.09, 0.7, 6, goldAccent, { emissive: 0.5 });
+
+          [-1.2, 0, 1.2].forEach((wx) => {
+            addBox(faces, wx, 1.9, 1.22, 0.48, 0.85, 0.06, windowGlow, { emissive: isNightMode ? 0.9 : 0 });
+          });
+          break;
+        }
+
+        case 'chinese_rows': {
+          addBox(faces, 0, 0.2, 0, 5.8, 0.4, 3.0, plinthColor);
+          addBox(faces, 0, 1.35, 0, 5.2, 1.9, 2.4, creamStone);
+
+          [
+            { x: 0, w: 2.3, h: 1.5, roofScale: 1.25 },
+            { x: -2.0, w: 1.4, h: 1.1, roofScale: 0.9 },
+            { x: 2.0, w: 1.4, h: 1.1, roofScale: 0.9 }
+          ].forEach((pag) => {
+            addPyramid(faces, pag.x, 2.3, 0, pag.w * 1.35, 0.55, 2.7, terraRoof);
+            addBox(faces, pag.x, 2.32, 0, pag.w * 1.48, 0.12, 2.85, goldAccent);
+            addBox(faces, pag.x, 2.95, 0, pag.w * 0.85, pag.h, 1.75, warmOchre);
+            addPyramid(faces, pag.x, 2.95 + pag.h / 2, 0, pag.w * 1.15, 0.95 * pag.roofScale, 2.1, copperRoof);
+            addBox(faces, pag.x, 2.98 + pag.h / 2, 0, pag.w * 1.28, 0.1, 2.25, goldAccent);
+            addCylinder(
+              faces,
+              pag.x,
+              2.95 + pag.h / 2 + 0.95 * pag.roofScale,
+              0,
+              0.03,
+              0.08,
+              0.85,
+              6,
+              goldAccent,
+              { emissive: 0.5 }
+            );
+          });
+
+          [-2.0, -1.0, 0, 1.0, 2.0].forEach((wx) => {
+            addBox(faces, wx, 1.2, 1.22, 0.45, 0.9, 0.06, windowGlow, { emissive: isNightMode ? 0.85 : 0 });
+          });
+          break;
+        }
+
+        case 'machinery_hall': {
+          addBox(faces, 0, 0.2, 0, 6.2, 0.4, 3.6, plinthColor);
+          addBox(faces, -2.0, 1.45, 0, 1.8, 2.1, 2.6, creamStone);
+          addBox(faces, 2.0, 1.45, 0, 1.8, 2.1, 2.6, creamStone);
+          addPyramid(faces, -2.0, 2.5, 0, 1.95, 0.7, 2.75, '#475569');
+          addPyramid(faces, 2.0, 2.5, 0, 1.95, 0.7, 2.75, '#475569');
+
+          addBox(faces, 0, 1.9, 0.2, 2.4, 3.0, 3.0, warmOchre);
+          addCylinder(faces, 0, 1.4, 1.72, 0.85, 0.85, 1.4, segs, azureDome, {
+            emissive: isNightMode ? 0.65 : 0.2
+          });
+
+          [
+            [-1.35, 1.4],
+            [1.35, 1.4],
+            [-1.35, -1.0],
+            [1.35, -1.0]
+          ].forEach(([px, pz]) => {
+            addBox(faces, px, 2.75, pz, 0.48, 4.7, 0.48, '#64748b');
+            addPyramid(faces, px, 5.1, pz, 0.62, 0.95, 0.62, copperRoof);
+            addDome(faces, px, 6.05, pz, 0.22, 0.25, 6, 3, goldAccent, { emissive: 0.5 });
+          });
+
+          addCylinder(faces, 0, 3.4, 0, 1.45, 1.55, 0.9, segs, '#94a3b8');
+          addDome(faces, 0, 4.3, 0, 1.5, 1.65, segs, 5, azureDome, {
+            emissive: isNightMode ? 0.55 : 0.15
+          });
+          addCylinder(faces, 0, 5.95, 0, 0.35, 0.42, 0.65, 8, goldAccent, { emissive: 0.4 });
+          addCylinder(faces, 0, 6.6, 0, 0.03, 0.08, 0.9, 6, goldAccent, { emissive: 0.6 });
+          break;
+        }
+
+        case 'simeon_church': {
+          addBox(faces, 0, 0.3, 0, 5.4, 0.6, 3.2, plinthColor);
+
+          addBox(faces, 1.15, 2.1, 0, 2.2, 3.0, 2.2, creamStone);
+          addBox(faces, 1.15, 3.65, 0, 2.38, 0.25, 2.38, warmOchre);
+          addPyramid(faces, 1.15, 3.77, 0, 2.35, 0.65, 2.35, copperRoof);
+
+          addCylinder(faces, 1.15, 4.2, 0, 0.45, 0.48, 1.1, segs, creamStone);
+          addDome(faces, 1.15, 5.3, 0, 0.52, 0.68, segs, 4, goldAccent, { emissive: 0.4 });
+          addCylinder(faces, 1.15, 5.98, 0, 0.03, 0.06, 0.65, 6, goldAccent, { emissive: 0.5 });
+
+          [
+            [0.45, 0.65],
+            [1.85, 0.65],
+            [0.45, -0.65],
+            [1.85, -0.65]
+          ].forEach(([dx, dz]) => {
+            addCylinder(faces, dx, 4.05, dz, 0.24, 0.26, 0.75, 8, creamStone);
+            addDome(faces, dx, 4.8, dz, 0.28, 0.38, 8, 3, copperRoof);
+          });
+
+          addBox(faces, -0.55, 1.45, 0, 1.4, 1.7, 1.8, creamStone);
+          addPyramid(faces, -0.55, 2.3, 0, 1.5, 0.55, 1.9, copperRoof);
+
+          addBox(faces, -1.85, 2.0, 0, 1.35, 2.8, 1.35, creamStone);
+          addCylinder(faces, -1.85, 3.4, 0, 0.52, 0.62, 1.25, segs, warmOchre);
+          addPyramid(faces, -1.85, 4.65, 0, 1.15, 1.95, 1.15, copperRoof);
+          addCylinder(faces, -1.85, 6.6, 0, 0.03, 0.07, 0.65, 6, goldAccent, { emissive: 0.5 });
+          break;
+        }
+
+        case 'central_asia':
+        default: {
+          addBox(faces, 0, 0.25, 0, 5.4, 0.5, 3.6, plinthColor);
+
+          addBox(faces, 0, 1.8, 0, 4.2, 2.6, 2.8, warmOchre);
+          addBox(faces, 0, 3.2, 0, 4.4, 0.3, 3.0, goldAccent);
+
+          addBox(faces, 0, 2.15, 1.45, 1.65, 3.3, 0.45, creamStone);
+          addBox(faces, 0, 1.55, 1.68, 0.95, 2.1, 0.08, azureDome, {
+            emissive: isNightMode ? 0.5 : 0.15
+          });
+
+          addCylinder(faces, 0, 3.35, 0, 1.1, 1.15, 0.85, segs, creamStone);
+          addDome(faces, 0, 4.2, 0, 1.22, 1.45, segs, 5, azureDome, {
+            emissive: isNightMode ? 0.45 : 0.15
+          });
+          addCylinder(faces, 0, 5.65, 0, 0.03, 0.09, 0.85, 6, goldAccent, { emissive: 0.55 });
+
+          [
+            [-2.25, 1.55],
+            [2.25, 1.55],
+            [-2.25, -1.55],
+            [2.25, -1.55]
+          ].forEach(([mx, mz]) => {
+            addCylinder(faces, mx, 0.5, mz, 0.26, 0.34, 4.1, segs, creamStone);
+            addCylinder(faces, mx, 4.6, mz, 0.36, 0.32, 0.35, segs, goldAccent);
+            addCylinder(faces, mx, 4.95, mz, 0.22, 0.24, 0.7, segs, warmOchre);
+            addDome(faces, mx, 5.65, mz, 0.26, 0.38, segs, 4, azureDome, { emissive: 0.35 });
+            addCylinder(faces, mx, 6.03, mz, 0.02, 0.05, 0.45, 6, goldAccent, { emissive: 0.5 });
+          });
+          break;
+        }
+      }
+
+      return faces;
+    }
+
+    // ==========================================
+    // 3D AR-ВИДОИСКАТЕЛЬ
+    // ==========================================
+
+    function HighDpiARStage({
+      location,
+      splitPercent,
+      setSplitPercent,
+      isNightMode,
+      renderMode,
+      lodLevel,
+      stageLayout,
+      showHotspots,
+      selectedHotspot,
+      onSelectHotspot,
+      solvedHotspots,
+      cameraState,
+      setCameraState,
+      autoOrbit,
+      setAutoOrbit
+    }) {
+      const containerRef = useRef(null);
+      const canvasRef = useRef(null);
+      const [projectedPins, setProjectedPins] = useState([]);
+      const [isDraggingCamera, setIsDraggingCamera] = useState(false);
+      const [isDraggingCurtain, setIsDraggingCurtain] = useState(false);
+      const dragStartRef = useRef({ x: 0, y: 0, yaw: 0, pitch: 0 });
+      const animTimeRef = useRef(0);
+
+      const projectPoint = useCallback((pt, yaw, pitch, zoom, width, height) => {
+        const [x, y, z] = pt;
+        const cy = Math.cos(yaw);
+        const sy = Math.sin(yaw);
+        const cp = Math.cos(pitch);
+        const sp = Math.sin(pitch);
+
+        const dy = y - 2.55;
+        const x1 = x * cy - z * sy;
+        const z1 = x * sy + z * cy;
+        const y2 = dy * cp - z1 * sp;
+        const z2 = dy * sp + z1 * cp;
+
+        const camDist = 11.4 / zoom;
+        const depth = z2 + camDist;
+        if (depth < 0.8) return null;
+
+        const fov = Math.min(width, height) * 0.92;
+        const sx = width * 0.5 + (x1 * fov) / depth;
+        const syScreen = height * 0.56 - (y2 * fov) / depth;
+        return { sx, sy: syScreen, depth, x1, y2, z2 };
+      }, []);
+
+      useEffect(() => {
+        let rafId;
+        let lastTs = performance.now();
+
+        const renderFrame = (now) => {
+          const dt = (now - lastTs) / 1000;
+          lastTs = now;
+          animTimeRef.current += dt;
+
+          if (autoOrbit && !isDraggingCamera && !isDraggingCurtain) {
+            setCameraState((prev) => ({
+              ...prev,
+              yaw: prev.yaw + dt * 0.36
+            }));
+          }
+
+          const canvas = canvasRef.current;
+          const container = containerRef.current;
+          if (!canvas || !container) {
+            rafId = requestAnimationFrame(renderFrame);
+            return;
+          }
+
+          const rect = container.getBoundingClientRect();
+          const width = Math.max(300, Math.floor(rect.width));
+          const height = Math.max(340, Math.floor(rect.height));
+          const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+          if (canvas.width !== Math.floor(width * dpr) || canvas.height !== Math.floor(height * dpr)) {
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+          }
+
+          const ctx = canvas.getContext('2d');
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, width, height);
+
+          const { yaw, pitch, zoom } = cameraState;
+          const splitX = (splitPercent / 100) * width;
+
+          const drawEnvironment = (isHistoricalEpoch) => {
+            const horizonY = height * 0.56 - Math.sin(pitch) * (height * 0.28);
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(horizonY, 60));
+            if (renderMode === 'lidar') {
+              skyGrad.addColorStop(0, '#020617');
+              skyGrad.addColorStop(1, '#0f172a');
+            } else if (isNightMode) {
+              skyGrad.addColorStop(0, isHistoricalEpoch ? '#0f0b09' : '#090d16');
+              skyGrad.addColorStop(0.6, isHistoricalEpoch ? '#271710' : '#111827');
+              skyGrad.addColorStop(1, isHistoricalEpoch ? '#451a03' : '#1e293b');
+            } else {
+              skyGrad.addColorStop(0, isHistoricalEpoch ? '#fde68a' : '#7dd3fc');
+              skyGrad.addColorStop(0.55, isHistoricalEpoch ? '#fef3c7' : '#bae6fd');
+              skyGrad.addColorStop(1, isHistoricalEpoch ? '#fed7aa' : '#e2e8f0');
+            }
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            const groundGrad = ctx.createLinearGradient(0, Math.max(0, horizonY), 0, height);
+            if (renderMode === 'lidar') {
+              groundGrad.addColorStop(0, '#091024');
+              groundGrad.addColorStop(1, '#020617');
+            } else if (isNightMode) {
+              groundGrad.addColorStop(0, isHistoricalEpoch ? '#1c1613' : '#0f141c');
+              groundGrad.addColorStop(1, '#090807');
+            } else {
+              groundGrad.addColorStop(0, isHistoricalEpoch ? '#a89f91' : '#94a3b8');
+              groundGrad.addColorStop(1, isHistoricalEpoch ? '#57534e' : '#475569');
+            }
+            ctx.fillStyle = groundGrad;
+            ctx.fillRect(0, Math.max(0, horizonY), width, height - Math.max(0, horizonY));
+
+            ctx.lineWidth = 1;
+            for (let g = -6; g <= 6; g++) {
+              const pA = projectPoint([g, 0, -6], yaw, pitch, zoom, width, height);
+              const pB = projectPoint([g, 0, 6], yaw, pitch, zoom, width, height);
+              if (pA && pB) {
+                ctx.strokeStyle =
+                  renderMode === 'lidar'
+                    ? 'rgba(56, 189, 248, 0.32)'
+                    : isHistoricalEpoch
+                    ? 'rgba(245, 158, 11, 0.25)'
+                    : 'rgba(52, 211, 153, 0.25)';
+                ctx.beginPath();
+                ctx.moveTo(pA.sx, pA.sy);
+                ctx.lineTo(pB.sx, pB.sy);
+                ctx.stroke();
+              }
+
+              const pC = projectPoint([-6, 0, g], yaw, pitch, zoom, width, height);
+              const pD = projectPoint([6, 0, g], yaw, pitch, zoom, width, height);
+              if (pC && pD) {
+                ctx.strokeStyle =
+                  renderMode === 'lidar'
+                    ? 'rgba(56, 189, 248, 0.32)'
+                    : isHistoricalEpoch
+                    ? 'rgba(245, 158, 11, 0.25)'
+                    : 'rgba(52, 211, 153, 0.25)';
+                ctx.beginPath();
+                ctx.moveTo(pC.sx, pC.sy);
+                ctx.lineTo(pD.sx, pD.sy);
+                ctx.stroke();
+              }
+            }
+
+            const sideFaces = [];
+            const sideWallColor = isNightMode ? '#1e293b' : '#cbd5e1';
+            addBox(sideFaces, -5.3, 1.8, -1.2, 1.8, 3.6, 3.2, sideWallColor);
+            addBox(sideFaces, 5.3, 1.9, -1.2, 1.8, 3.8, 3.2, sideWallColor);
+
+            sideFaces.forEach((f) => {
+              const pts = f.verts.map((v) => projectPoint(v, yaw, pitch, zoom, width, height));
+              if (pts.some((p) => !p)) return;
+              ctx.beginPath();
+              ctx.moveTo(pts[0].sx, pts[0].sy);
+              for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+              ctx.closePath();
+              ctx.fillStyle = isNightMode ? 'rgba(30,41,59,0.72)' : 'rgba(203,213,225,0.68)';
+              ctx.fill();
+              ctx.strokeStyle = 'rgba(52, 211, 153, 0.6)';
+              ctx.setLineDash([4, 3]);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            });
+          };
+
+          if (splitX < width - 1) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(splitX, 0, width - splitX, height);
+            ctx.clip();
+
+            drawEnvironment(false);
+
+            const modernTrees = [
+              [-1.6, 0, 0.4],
+              [1.6, 0, 0.4],
+              [-0.8, 0, -1.1],
+              [0.9, 0, -1.0]
+            ];
+            modernTrees.forEach(([tx, ty, tz]) => {
+              const base = projectPoint([tx, ty, tz], yaw, pitch, zoom, width, height);
+              const crown = projectPoint([tx, ty + 1.45, tz], yaw, pitch, zoom, width, height);
+              if (base && crown) {
+                ctx.strokeStyle = '#57534e';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(base.sx, base.sy);
+                ctx.lineTo(crown.sx, crown.sy);
+                ctx.stroke();
+
+                ctx.fillStyle = isNightMode ? 'rgba(6, 95, 70, 0.78)' : 'rgba(22, 163, 74, 0.78)';
+                ctx.beginPath();
+                ctx.arc(crown.sx, crown.sy, Math.max(10, 145 / crown.depth), 0, Math.PI * 2);
+                ctx.fill();
+              }
+            });
+
+            const footprint = [
+              [-2.8, 0.02, 1.6],
+              [2.8, 0.02, 1.6],
+              [2.8, 0.02, -1.6],
+              [-2.8, 0.02, -1.6]
+            ].map((v) => projectPoint(v, yaw, pitch, zoom, width, height));
+
+            if (footprint.every(Boolean)) {
+              ctx.beginPath();
+              ctx.moveTo(footprint[0].sx, footprint[0].sy);
+              footprint.slice(1).forEach((p) => ctx.lineTo(p.sx, p.sy));
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(16, 185, 129, 0.14)';
+              ctx.fill();
+              ctx.strokeStyle = '#34d399';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([6, 4]);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+
+            ctx.restore();
+          }
+
+          if (splitX > 1) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, splitX, height);
+            ctx.clip();
+
+            drawEnvironment(true);
+
+            const shadowCorners = [
+              [-3.2, 0.01, 2.0],
+              [3.5, 0.01, 2.0],
+              [3.9, 0.01, -2.2],
+              [-2.9, 0.01, -2.2]
+            ].map((v) => projectPoint(v, yaw, pitch, zoom, width, height));
+
+            if (shadowCorners.every(Boolean)) {
+              ctx.beginPath();
+              ctx.moveTo(shadowCorners[0].sx, shadowCorners[0].sy);
+              shadowCorners.slice(1).forEach((p) => ctx.lineTo(p.sx, p.sy));
+              ctx.closePath();
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+              ctx.fill();
+            }
+
+            const rawFaces = buildMonumentGeometry(
+              location.id,
+              isNightMode,
+              lodLevel,
+              animTimeRef.current
+            );
+
+            const lightDir = [0.55, 0.72, 0.42];
+            const projectedFaces = [];
+
+            for (let i = 0; i < rawFaces.length; i++) {
+              const face = rawFaces[i];
+              const pts = [];
+              let depthSum = 0;
+              let valid = true;
+
+              for (let j = 0; j < face.verts.length; j++) {
+                const p = projectPoint(face.verts[j], yaw, pitch, zoom, width, height);
+                if (!p) {
+                  valid = false;
+                  break;
+                }
+                pts.push(p);
+                depthSum += p.depth;
+              }
+              if (!valid) continue;
+
+              const [nx, ny, nz] = face.normal || [0, 1, 0];
+              const dot = Math.max(0, nx * lightDir[0] + ny * lightDir[1] + nz * lightDir[2]);
+              const lightFactor = face.emissive
+                ? 1 + face.emissive * 0.38
+                : (isNightMode ? 0.52 : 0.68) + dot * 0.42;
+
+              projectedFaces.push({
+                pts,
+                avgDepth: depthSum / pts.length,
+                fillStyle: shadeHexColor(face.color, lightFactor),
+                emissive: face.emissive
+              });
+            }
+
+            projectedFaces.sort((a, b) => b.avgDepth - a.avgDepth);
+
+            for (let i = 0; i < projectedFaces.length; i++) {
+              const pf = projectedFaces[i];
+              ctx.beginPath();
+              ctx.moveTo(pf.pts[0].sx, pf.pts[0].sy);
+              for (let j = 1; j < pf.pts.length; j++) {
+                ctx.lineTo(pf.pts[j].sx, pf.pts[j].sy);
+              }
+              ctx.closePath();
+
+              if (renderMode === 'wireframe') {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+                ctx.fill();
+                ctx.strokeStyle = pf.emissive ? '#fbbf24' : '#38bdf8';
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+              } else if (renderMode === 'lidar') {
+                ctx.fillStyle = 'rgba(8, 47, 73, 0.48)';
+                ctx.fill();
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 0.9;
+                ctx.stroke();
+                ctx.fillStyle = pf.emissive ? '#fbbf24' : '#38bdf8';
+                pf.pts.forEach((pt) => {
+                  ctx.fillRect(pt.sx - 1.5, pt.sy - 1.5, 3, 3);
+                });
+              } else {
+                ctx.fillStyle = pf.fillStyle;
+                ctx.fill();
+                ctx.strokeStyle = isNightMode ? 'rgba(245, 158, 11, 0.22)' : 'rgba(68, 64, 60, 0.28)';
+                ctx.lineWidth = 0.75;
+                ctx.stroke();
+              }
+            }
+
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = 'rgba(245, 158, 11, 0.9)';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.moveTo(splitX, 0);
+          ctx.lineTo(splitX, height);
+          ctx.stroke();
+          ctx.restore();
+
+          const nextPins = (location.hotspots || [])
+            .map((spot, idx) => {
+              const proj = projectPoint(spot.pos3D || [0, 3.0, 0.8], yaw, pitch, zoom, width, height);
+              if (!proj) return null;
+              return {
+                ...spot,
+                index: idx + 1,
+                sx: proj.sx,
+                sy: proj.sy
+              };
+            })
+            .filter(Boolean);
+
+          setProjectedPins(nextPins);
+          ctx.restore();
+          rafId = requestAnimationFrame(renderFrame);
+        };
+
+        rafId = requestAnimationFrame(renderFrame);
+        return () => cancelAnimationFrame(rafId);
+      }, [
+        location,
+        splitPercent,
+        isNightMode,
+        renderMode,
+        lodLevel,
+        stageLayout,
+        cameraState,
+        autoOrbit,
+        isDraggingCamera,
+        isDraggingCurtain,
+        projectPoint,
+        setCameraState
+      ]);
+
+      const handlePointerDown = (e) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const relX = clientX - rect.left;
+        const splitX = (splitPercent / 100) * rect.width;
+
+        if (Math.abs(relX - splitX) < 24) {
+          setIsDraggingCurtain(true);
+          setAutoOrbit(false);
+          return;
+        }
+
+        setIsDraggingCamera(true);
+        setAutoOrbit(false);
+        dragStartRef.current = {
+          x: clientX,
+          y: clientY,
+          yaw: cameraState.yaw,
+          pitch: cameraState.pitch
+        };
+      };
+
+      const handlePointerMove = (e) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        if (isDraggingCurtain) {
+          const pct = Math.min(96, Math.max(4, ((clientX - rect.left) / rect.width) * 100));
+          setSplitPercent(Math.round(pct));
+          return;
+        }
+
+        if (!isDraggingCamera) return;
+        const dx = clientX - dragStartRef.current.x;
+        const dy = clientY - dragStartRef.current.y;
+
+        setCameraState((prev) => ({
+          ...prev,
+          yaw: dragStartRef.current.yaw + dx * 0.0085,
+          pitch: Math.min(0.62, Math.max(-0.18, dragStartRef.current.pitch + dy * 0.0055))
+        }));
+      };
+
+      const handlePointerUp = () => {
+        setIsDraggingCamera(false);
+        setIsDraggingCurtain(false);
+      };
+
+      return (
+        <div
+          ref={containerRef}
+          onMouseDown={handlePointerDown}
+          onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp}
+          onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchMove={handlePointerMove}
+          onTouchEnd={handlePointerUp}
+          className={`relative w-full overflow-hidden select-none bg-stone-950 transition-all duration-300 ${
+            stageLayout === 'phone'
+              ? 'max-w-[430px] mx-auto h-[560px] rounded-[40px] border-[6px] border-stone-800 shadow-2xl'
+              : 'h-[490px] sm:h-[560px] rounded-3xl border border-stone-800 shadow-2xl'
+          } ${isDraggingCamera ? 'cursor-grabbing' : 'cursor-grab'}`}
+        >
+          <canvas ref={canvasRef} className="block w-full h-full" />
+
+          {/* ВЕРХНИЙ ТЕЛЕМЕТРИЧЕСКИЙ HUD */}
+          <div className="absolute top-3.5 inset-x-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-950/85 backdrop-blur-md border border-stone-800 text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-emerald-400">VPS &lt; 15 см • 60 FPS</span>
+              <span className="text-stone-600">•</span>
+              <span className="text-stone-200">
+                #{location.number} {location.shortTitle}
+              </span>
+              <span className="hidden sm:inline text-stone-500">•</span>
+              <span className="hidden sm:inline text-amber-400">
+                {location.triangles[lodLevel]} треуг. ({lodLevel})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {[
+                { label: 'Фасад', yaw: 0, pitch: 0.12 },
+                { label: '3/4 Ракурс', yaw: -0.45, pitch: 0.18 },
+                { label: 'Сверху', yaw: -0.3, pitch: 0.48 }
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAutoOrbit(false);
+                    setCameraState((prev) => ({ ...prev, yaw: preset.yaw, pitch: preset.pitch }));
+                  }}
+                  className="hidden sm:inline-block px-2.5 py-1 rounded-full bg-stone-950/85 hover:bg-stone-800 text-stone-300 border border-stone-700 text-[10px] font-bold cursor-pointer"
+                >
+                  {preset.label}
+                </button>
+              ))}
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAutoOrbit(!autoOrbit);
+                }}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                  autoOrbit
+                    ? 'bg-amber-400 text-stone-950 border-amber-300'
+                    : 'bg-stone-950/85 text-stone-300 border-stone-700 hover:text-white'
+                }`}
+              >
+                {autoOrbit ? '360° Авто: ВКЛ' : '360° Облет'}
+              </button>
+            </div>
+          </div>
+
+          {/* МАРКЕРЫ СЛОЕВ ВРЕМЕНИ */}
+          <div className="absolute top-14 left-4 z-10 px-2.5 py-1 rounded-lg bg-amber-500/90 text-stone-950 text-[10px] font-black uppercase tracking-wider shadow pointer-events-none">
+            ◄ 1896 год • Реконструкция 1:1
+          </div>
+          <div className="absolute top-14 right-4 z-10 px-2.5 py-1 rounded-lg bg-stone-950/85 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
+            Наши дни • VPS-привязка ►
+          </div>
+
+          {/* РУЧКА ПЕРЕТАСКИВАНИЯ ШТОРКИ ВРЕМЕНИ */}
+          <div
+            style={{ left: `${splitPercent}%` }}
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+          >
+            <div className="w-9 h-9 rounded-full bg-amber-400 text-stone-950 shadow-xl flex items-center justify-center border-2 border-stone-950">
+              <MoveHorizontal className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* 3D-МЕТКИ НА ФАСАДЕ */}
+          {showHotspots &&
+            projectedPins.map((pin) => {
+              const isSolved = solvedHotspots.includes(pin.id);
+              const isCurrent = selectedHotspot?.id === pin.id;
+              return (
+                <button
+                  key={pin.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectHotspot(pin);
+                  }}
+                  style={{ left: `${pin.sx}px`, top: `${pin.sy}px` }}
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-transform cursor-pointer shadow-lg ${
+                    isSolved
+                      ? 'bg-emerald-400 text-stone-950 ring-4 ring-emerald-400/30'
+                      : isCurrent
+                      ? 'bg-amber-400 text-stone-950 ring-4 ring-amber-300/60 scale-110'
+                      : 'bg-stone-950/90 text-amber-300 border border-amber-400 hover:bg-amber-400 hover:text-stone-950'
+                  }`}
+                >
+                  <span className="w-4 h-4 rounded-full bg-stone-950 text-amber-400 text-[10px] flex items-center justify-center font-black">
+                    {isSolved ? '✓' : pin.index}
+                  </span>
+                  <span className="hidden sm:inline">{pin.label}</span>
+                </button>
+              );
+            })}
+
+          {/* НИЖНЯЯ ПАНЕЛЬ УПРАВЛЕНИЯ */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="absolute bottom-3.5 inset-x-4 z-30 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-stone-950/85 backdrop-blur-md border border-stone-800/90"
+          >
+            <div className="flex items-center gap-2 text-[11px] text-stone-300">
+              <Compass className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="hidden md:inline">Вращайте 3D-модель мышью на 360° • тяните шторку</span>
+              <span className="md:hidden">Вращайте 3D-модель пальцем</span>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-1 max-w-xs">
+              <span className="text-[10px] font-extrabold text-amber-400 whitespace-nowrap">
+                1896 ({splitPercent}%)
+              </span>
+              <input
+                type="range"
+                min="5"
+                max="95"
+                value={splitPercent}
+                onChange={(e) => setSplitPercent(Number(e.target.value))}
+                className="w-full accent-amber-400 h-1.5 bg-stone-800 rounded-lg cursor-pointer"
+              />
+              <span className="text-[10px] font-bold text-stone-400 whitespace-nowrap">Наши дни</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() =>
+                  setCameraState((prev) => ({ ...prev, zoom: Math.max(0.75, prev.zoom - 0.15) }))
+                }
+                className="p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-700 cursor-pointer"
+                title="Отдалить"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() =>
+                  setCameraState((prev) => ({ ...prev, zoom: Math.min(1.6, prev.zoom + 0.15) }))
+                }
+                className="p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-700 cursor-pointer"
+                title="Приблизить"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setCameraState({ yaw: -0.35, pitch: 0.16, zoom: 1.0 })}
+                className="p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-700 cursor-pointer"
+                title="Сбросить ракурс"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // ГЛАВНОЕ ПРИЛОЖЕНИЕ
+    // ==========================================
+
+    function App() {
+      const [activeLocationId, setActiveLocationId] = useState('arch');
+      const activeLocation =
+        AR_LOCATIONS.find((loc) => loc.id === activeLocationId) || AR_LOCATIONS[0];
+
+      const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
+      const [unlockedTicketCode, setUnlockedTicketCode] = useState(null);
+
+      const [stageLayout, setStageLayout] = useState('wide');
+      const [renderMode, setRenderMode] = useState('pbr');
+      const [lodLevel, setLodLevel] = useState('LOD0');
+      const [splitPercent, setSplitPercent] = useState(80);
+      const [isNightMode, setIsNightMode] = useState(false);
+      const [showHotspots, setShowHotspots] = useState(true);
+      const [autoOrbit, setAutoOrbit] = useState(false);
+      const [cameraState, setCameraState] = useState({
+        yaw: -0.35,
+        pitch: 0.16,
+        zoom: 1.0
+      });
+
+      const [inspectorTab, setInspectorTab] = useState('audio');
+      const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+      const [selectedHotspot, setSelectedHotspot] = useState(AR_LOCATIONS[0].hotspots[0]);
+      const [solvedHotspots, setSolvedHotspots] = useState([]);
+      const [quizFeedback, setQuizFeedback] = useState(null);
+      const [copiedPromo, setCopiedPromo] = useState(null);
+
+      const [catalogFilter, setCatalogFilter] = useState('Все 10 объектов');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [activeMapRoute, setActiveMapRoute] = useState('all');
+
+      const [showRuStoreModal, setShowRuStoreModal] = useState(false);
+      const [isDownloadingApk, setIsDownloadingApk] = useState(false);
+      const [apkDownloaded, setApkDownloaded] = useState(false);
+      const [showSbpModal, setShowSbpModal] = useState(false);
+      const [activeCafeCoupon, setActiveCafeCoupon] = useState(null);
+      const [openFaqIndex, setOpenFaqIndex] = useState(0);
+
+      const handleSelectLocation = (locId, shouldScrollToSimulator = false) => {
+        const target = AR_LOCATIONS.find((l) => l.id === locId);
+        if (!target) return;
+        setActiveLocationId(locId);
+        setSelectedHotspot(target.hotspots[0]);
+        setQuizFeedback(null);
+        if (shouldScrollToSimulator) {
+          const el = document.getElementById('simulator-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      };
+
+      const handleAnswerQuiz = (hotspot, optionIndex) => {
+        if (optionIndex === hotspot.correctIndex) {
+          if (!solvedHotspots.includes(hotspot.id)) {
+            setSolvedHotspots((prev) => [...prev, hotspot.id]);
+          }
+          const partnerCafe =
+            PARTNER_CAFES.find((c) => c.id === activeLocation.nearestCafeId) || PARTNER_CAFES[0];
+          setQuizFeedback({
+            correct: true,
+            text: `Верно! Вам открыт купон -10% в «${partnerCafe.name}»`,
+            promoCode: partnerCafe.promoCode
+          });
+        } else {
+          setQuizFeedback({
+            correct: false,
+            text: 'Почти угадали! Прочитайте архивную подсказку выше и выберите другой ответ.'
+          });
+        }
+      };
+
+      const handleCopyCode = (code) => {
+        navigator.clipboard?.writeText(code);
+        setCopiedPromo(code);
+        setTimeout(() => setCopiedPromo(null), 2200);
+      };
+
+      const scrollToSection = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      const filteredCatalogLocations = AR_LOCATIONS.filter((loc) => {
+        const matchesCategory =
+          catalogFilter === 'Все 10 объектов'
+            ? true
+            : catalogFilter === 'Бесплатные в демо'
+            ? loc.isFreeDemo
+            : loc.routeCategory === catalogFilter;
+        const matchesSearch =
+          !searchQuery.trim() ||
+          loc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          loc.architect.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          loc.address.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+      const mapLocations =
+        activeMapRoute === 'all'
+          ? AR_LOCATIONS
+          : AR_LOCATIONS.filter((l) => l.routeId === activeMapRoute);
+
+      return (
+        <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
+          {/* НАВИГАЦИОННАЯ ШАПКА */}
+          <header className="sticky top-0 z-40 backdrop-blur-xl bg-stone-950/90 border-b border-stone-800/90">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+              <button
+                onClick={() => scrollToSection('hero-section')}
+                className="flex items-center gap-3 text-left group cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                  <Compass className="w-5 h-5 text-stone-950 stroke-[2.4]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-lg tracking-tight text-white">
+                      Хрони<span className="text-amber-400">AR</span>
+                    </span>
+                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      RuStore 1.0 • Нижний Новгород
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-400 hidden xl:block">
+                    3D-реконструкция утраченной городской архитектуры в масштабе 1:1
+                  </p>
+                </div>
+              </button>
+
+              <nav className="hidden lg:flex items-center gap-1 bg-stone-900/90 p-1 rounded-xl border border-stone-800">
+                {[
+                  { id: 'simulator-section', label: '3D AR-Симулятор' },
+                  { id: 'catalog-section', label: 'Каталог 10 зданий' },
+                  { id: 'map-section', label: 'Карта маршрутов' },
+                  { id: 'cafes-section', label: 'Квесты и Кофейни' },
+                  { id: 'tech-section', label: 'Технология VPS' },
+                  { id: 'pricing-section', label: 'Тарифы (249 ₽)' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-300 hover:text-white hover:bg-stone-800 transition-all cursor-pointer"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-2">
+                {isPremiumUnlocked ? (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                    <Unlock className="w-3.5 h-3.5" /> Полный доступ (10/10)
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setShowSbpModal(true)}
+                    className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Весь квест • 249 ₽</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowRuStoreModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 text-stone-100 border border-stone-700 transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Скачать (45 МБ)</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* HERO SECTION */}
+          <section
+            id="hero-section"
+            className="relative overflow-hidden pt-10 pb-12 lg:py-16 border-b border-stone-800/80 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/35 via-stone-950 to-stone-950"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div className="lg:col-span-7 space-y-5">
+                  <div className="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    <Sparkles className="w-3.5 h-3.5" /> Доступно в RuStore • 10 утраченных шедевров Нижнего Новгорода в 1:1
+                  </div>
+
+                  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.08]">
+                    Наведите смартфон и увидьте{' '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-500">
+                      Нижний Новгород 1896 года
+                    </span>{' '}
+                    наяву
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-stone-300 leading-relaxed max-w-2xl">
+                    Мобильная AR-платформа «ХрониAR» возвращает утраченные соборы, триумфальные арки, пагоды Нижегородской ярмарки и Кремлевский элеватор в реальном масштабе 1:1 прямо на улицы города.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <button
+                      onClick={() => scrollToSection('simulator-section')}
+                      className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 font-black text-sm flex items-center gap-2 shadow-xl shadow-amber-500/20 cursor-pointer"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Запустить 3D AR-симулятор (10 зданий)</span>
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('catalog-section')}
+                      className="px-5 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-white font-bold text-sm flex items-center gap-2 cursor-pointer"
+                    >
+                      <Layers className="w-4 h-4 text-amber-400" />
+                      <span>Смотреть каталог 10 объектов</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {[
+                    {
+                      icon: Box,
+                      badge: '10 моделей в S3',
+                      title: 'Реконструкции 1:1',
+                      desc: 'Воссоздано по архивным чертежам Шехтеля, Монферрана, Шухова, Померанцева и Бетанкура.'
+                    },
+                    {
+                      icon: Compass,
+                      badge: 'VPS < 15 см',
+                      title: 'Точная геопривязка',
+                      desc: 'Посадка 3D-фасадов по контурам соседних зданий без дрожания на частоте 60 FPS.'
+                    },
+                    {
+                      icon: HardDrive,
+                      badge: '45 МБ в RuStore',
+                      title: 'Загрузка за 1,5 сек',
+                      desc: 'Никаких 2,5 ГБ в памяти телефона: сжатие LZ4 и потоковая подгрузка по сети 4G.'
+                    },
+                    {
+                      icon: Coffee,
+                      badge: 'Квест + Бонусы',
+                      title: 'Скидка 10% на кофе',
+                      desc: 'Ищите детали на 3D-фасадах, слушайте аудиогид и получайте купоны в 5 кофейнях центра.'
+                    }
+                  ].map((feat, idx) => {
+                    const Icon = feat.icon;
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-2xl bg-stone-900/90 border border-stone-800 hover:border-amber-500/40 transition-all space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-stone-950 text-emerald-400 border border-stone-800">
+                            {feat.badge}
+                          </span>
+                        </div>
+                        <h3 className="font-extrabold text-sm text-white">{feat.title}</h3>
+                        <p className="text-xs text-stone-400 leading-relaxed">{feat.desc}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 1: 3D AR-СИМУЛЯТОР */}
+          <section id="simulator-section" className="py-12 lg:py-16 border-b border-stone-800/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mb-2">
+                    <Eye className="w-3.5 h-3.5" /> ИНТЕРАКТИВНЫЙ 3D AR-ВИДОИСКАТЕЛЬ (ВСЕ 10 ПАМЯТНИКОВ)
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-black text-white">
+                    Выберите любое из 10 зданий и покрутите модель на 360°
+                  </h2>
+                  <p className="text-sm text-stone-400 mt-1">
+                    Двигайте шторку времени «1896 ↔ Наши дни», переключайте уровни детализации LOD0–LOD2, режим сетки или ночную подсветку.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="px-3 py-1.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-300">
+                    Отгадано деталей квеста:{' '}
+                    <strong className="text-amber-400">{solvedHotspots.length}</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* ЛЕНТА ВЫБОРА 10 ОБЪЕКТОВ */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2">
+                {AR_LOCATIONS.map((loc) => {
+                  const active = activeLocation.id === loc.id;
+                  return (
+                    <button
+                      key={loc.id}
+                      onClick={() => handleSelectLocation(loc.id, false)}
+                      className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        active
+                          ? 'bg-gradient-to-br from-amber-400/25 to-orange-500/20 border-amber-400 shadow-lg ring-2 ring-amber-400/30'
+                          : 'bg-stone-900/90 border-stone-800 hover:border-stone-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[10px] font-black">
+                        <span className={active ? 'text-amber-300' : 'text-stone-500'}>
+                          #{loc.number}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[9px] ${
+                            loc.isFreeDemo || isPremiumUnlocked
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : 'bg-amber-500/20 text-amber-300'
+                          }`}
+                        >
+                          {loc.isFreeDemo ? 'Демо' : isPremiumUnlocked ? 'Открыто' : 'Квест'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-extrabold text-white leading-tight mt-1.5 line-clamp-2">
+                        {loc.shortTitle}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* ПАНЕЛЬ НАСТРОЕК РЕНДЕРА */}
+              <div className="p-3 rounded-2xl bg-stone-900/95 border border-stone-800 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800">
+                  {[
+                    { id: 'wide', label: 'Широкий 3D-вид (16:9)', icon: Maximize2 },
+                    { id: 'phone', label: 'Экран смартфона', icon: Smartphone }
+                  ].map((mode) => {
+                    const Icon = mode.icon;
+                    return (
+                      <button
+                        key={mode.id}
+                        onClick={() => setStageLayout(mode.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          stageLayout === mode.id
+                            ? 'bg-amber-400 text-stone-950 shadow'
+                            : 'text-stone-400 hover:text-white'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{mode.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800">
+                    {[
+                      { id: 'pbr', label: 'PBR Чистовой' },
+                      { id: 'wireframe', label: '3D-Сетка' },
+                      { id: 'lidar', label: 'VPS Скан-лидар' }
+                    ].map((rm) => (
+                      <button
+                        key={rm.id}
+                        onClick={() => setRenderMode(rm.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer ${
+                          renderMode === rm.id
+                            ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                            : 'text-stone-400 hover:text-white'
+                        }`}
+                      >
+                        {rm.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center bg-stone-950 p-1 rounded-xl border border-stone-800">
+                    {['LOD0', 'LOD1', 'LOD2'].map((lvl) => (
+                      <button
+                        key={lvl}
+                        onClick={() => setLodLevel(lvl)}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-extrabold cursor-pointer ${
+                          lodLevel === lvl
+                            ? 'bg-stone-800 text-amber-400'
+                            : 'text-stone-500 hover:text-stone-300'
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setIsNightMode(!isNightMode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      isNightMode
+                        ? 'bg-indigo-950/80 border-indigo-400/50 text-amber-300'
+                        : 'bg-stone-950 border-stone-800 text-stone-300 hover:text-white'
+                    }`}
+                  >
+                    {isNightMode ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                    <span>{isNightMode ? 'Сумерки' : 'День'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowHotspots(!showHotspots)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-950 border border-stone-800 text-stone-300 hover:text-white cursor-pointer"
+                  >
+                    {showHotspots ? (
+                      <Eye className="w-3.5 h-3.5 text-amber-400" />
+                    ) : (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    )}
+                    <span className="hidden md:inline">
+                      {showHotspots ? '3D-Метки: ВКЛ' : 'Метки: СКРЫТЫ'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ХОЛСТ + ИНСПЕКТОР */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <div className="lg:col-span-8 flex flex-col justify-center">
+                  <HighDpiARStage
+                    location={activeLocation}
+                    splitPercent={splitPercent}
+                    setSplitPercent={setSplitPercent}
+                    isNightMode={isNightMode}
+                    renderMode={renderMode}
+                    lodLevel={lodLevel}
+                    stageLayout={stageLayout}
+                    showHotspots={showHotspots}
+                    selectedHotspot={selectedHotspot}
+                    onSelectHotspot={(spot) => {
+                      setSelectedHotspot(spot);
+                      setInspectorTab('quest');
+                      setQuizFeedback(null);
+                    }}
+                    solvedHotspots={solvedHotspots}
+                    cameraState={cameraState}
+                    setCameraState={setCameraState}
+                    autoOrbit={autoOrbit}
+                    setAutoOrbit={setAutoOrbit}
+                  />
+                </div>
+
+                <div className="lg:col-span-4 rounded-3xl bg-stone-900 border border-stone-800 p-5 flex flex-col justify-between space-y-4 shadow-2xl">
+                  <div className="space-y-4">
+                    <div className="pb-3 border-b border-stone-800">
+                      <div className="flex items-center justify-between text-[11px] font-bold">
+                        <span className="text-amber-400">
+                          Объект #{activeLocation.number} • {activeLocation.styleTag}
+                        </span>
+                        <span className="text-stone-400">{activeLocation.years}</span>
+                      </div>
+                      <h3 className="text-lg font-black text-white mt-0.5">{activeLocation.title}</h3>
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        {activeLocation.architect} • {activeLocation.address}
+                      </p>
+                    </div>
+
+                    {!activeLocation.isFreeDemo && !isPremiumUnlocked && (
+                      <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-between gap-2">
+                        <div className="text-[11px] text-amber-200 leading-snug">
+                          <strong>3D-предпросмотр открыт!</strong> Полный аудиогид и купоны входят в квест-маршрут.
+                        </div>
+                        <button
+                          onClick={() => setShowSbpModal(true)}
+                          className="px-2.5 py-1.5 rounded-xl bg-amber-400 text-stone-950 text-[11px] font-black shrink-0 cursor-pointer"
+                        >
+                          Открыть • 249 ₽
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs font-bold">
+                      {[
+                        { id: 'audio', label: 'Аудиогид' },
+                        { id: 'quest', label: 'Квест фасада' },
+                        { id: 'coupon', label: 'Кофе (-10%)' }
+                      ].map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setInspectorTab(t.id)}
+                          className={`py-1.5 rounded-lg transition-all cursor-pointer ${
+                            inspectorTab === t.id
+                              ? 'bg-amber-400 text-stone-950'
+                              : 'text-stone-400 hover:text-white'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {inspectorTab === 'audio' && (
+                      <div className="space-y-3">
+                        <p className="text-xs text-stone-300 leading-relaxed">
+                          {activeLocation.summary}
+                        </p>
+
+                        <div className="p-3.5 rounded-2xl bg-stone-950 border border-stone-800 flex items-center gap-3">
+                          <button
+                            onClick={() => setIsAudioPlaying(!isAudioPlaying)}
+                            className="w-11 h-11 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 flex items-center justify-center shadow shrink-0 cursor-pointer"
+                          >
+                            {isAudioPlaying ? (
+                              <Pause className="w-5 h-5 fill-current" />
+                            ) : (
+                              <Play className="w-5 h-5 fill-current" />
+                            )}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between text-xs font-extrabold text-white">
+                              <span>Аудиогид диктора</span>
+                              <span className="text-amber-400">{activeLocation.audioDuration}</span>
+                            </div>
+                            <div className="text-[11px] text-emerald-400 mt-0.5">
+                              {isAudioPlaying
+                                ? '● Воспроизводится звуковая дорожка...'
+                                : 'Нажмите Play для запуска озвучки'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-stone-950 border border-stone-800 space-y-1.5">
+                          <div className="text-[10px] font-bold text-stone-400 uppercase">
+                            Расшифровка диктора:
+                          </div>
+                          <p className="text-xs text-stone-200 leading-relaxed italic">
+                            {activeLocation.audioTranscript}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1">
+                          <div className="text-[11px] font-bold text-amber-300">Архивный факт:</div>
+                          <p className="text-xs text-stone-300 leading-relaxed">
+                            {activeLocation.curiousFact}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {inspectorTab === 'quest' && selectedHotspot && (
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {activeLocation.hotspots.map((h, i) => (
+                            <button
+                              key={h.id}
+                              onClick={() => {
+                                setSelectedHotspot(h);
+                                setQuizFeedback(null);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
+                                selectedHotspot.id === h.id
+                                  ? 'bg-amber-400/20 border-amber-400 text-amber-300'
+                                  : 'bg-stone-950 border-stone-800 text-stone-400'
+                              }`}
+                            >
+                              Метка #{i + 1}: {h.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-stone-950 border border-stone-800 space-y-1.5">
+                          <div className="text-xs font-extrabold text-amber-400">
+                            {selectedHotspot.title}
+                          </div>
+                          <p className="text-xs text-stone-300 leading-relaxed">
+                            {selectedHotspot.fact}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-xs font-extrabold text-white">
+                            Вопрос квеста (дает скидку 10% в кофейне):
+                          </div>
+                          <p className="text-xs text-amber-200/90">{selectedHotspot.question}</p>
+                          <div className="space-y-1.5 pt-1">
+                            {selectedHotspot.options.map((option, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleAnswerQuiz(selectedHotspot, idx)}
+                                className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold bg-stone-950 hover:bg-stone-800 border border-stone-800 hover:border-amber-400/50 text-stone-200 flex items-center justify-between transition-all cursor-pointer"
+                              >
+                                <span>{option}</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {quizFeedback && (
+                          <div
+                            className={`p-3 rounded-xl text-xs font-semibold space-y-2 ${
+                              quizFeedback.correct
+                                ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
+                                : 'bg-rose-500/15 border border-rose-500/40 text-rose-300'
+                            }`}
+                          >
+                            <div>{quizFeedback.text}</div>
+                            {quizFeedback.promoCode && (
+                              <button
+                                onClick={() => handleCopyCode(quizFeedback.promoCode)}
+                                className="w-full py-2 rounded-lg bg-emerald-400 text-stone-950 font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                {copiedPromo === quizFeedback.promoCode ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5" /> Промокод скопирован
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5" /> Скопировать {quizFeedback.promoCode}
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {inspectorTab === 'coupon' &&
+                      (() => {
+                        const nearCafe =
+                          PARTNER_CAFES.find((c) => c.id === activeLocation.nearestCafeId) ||
+                          PARTNER_CAFES[0];
+                        return (
+                          <div className="space-y-3">
+                            <div className="p-4 rounded-2xl bg-stone-950 border border-stone-800 space-y-2">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300">
+                                Скидка {nearCafe.discount} для гостей «ХрониAR»
+                              </span>
+                              <h4 className="text-base font-extrabold text-white">{nearCafe.name}</h4>
+                              <p className="text-xs text-stone-400">{nearCafe.address}</p>
+                              <p className="text-xs text-stone-300">
+                                Рекомендуем: <strong className="text-amber-300">{nearCafe.specialty}</strong>
+                              </p>
+                              <div className="text-[11px] text-emerald-400 font-semibold">
+                                Расстояние от точки: {activeLocation.distanceToCafe}
+                              </div>
+                            </div>
+
+                            <div className="p-3.5 rounded-2xl bg-stone-950 border border-dashed border-amber-400/60 text-center space-y-2">
+                              <div className="text-[11px] text-stone-400">Промокод на кассе:</div>
+                              <div className="text-xl font-black tracking-wider text-amber-400">
+                                {nearCafe.promoCode}
+                              </div>
+                              <button
+                                onClick={() => handleCopyCode(nearCafe.promoCode)}
+                                className="w-full py-2 rounded-xl bg-amber-400 text-stone-950 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                {copiedPromo === nearCafe.promoCode ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5" /> Скопировано!
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5" /> Скопировать промокод
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                  </div>
+
+                  <div className="pt-3 border-t border-stone-800 grid grid-cols-3 gap-2 text-center text-[11px]">
+                    <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                      <div className="text-stone-500 text-[10px]">Полигоны</div>
+                      <div className="font-extrabold text-amber-400">
+                        {activeLocation.triangles[lodLevel]}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                      <div className="text-stone-500 text-[10px]">Облако S3</div>
+                      <div className="font-extrabold text-emerald-400">{activeLocation.s3Size}</div>
+                    </div>
+                    <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                      <div className="text-stone-500 text-[10px]">Точность</div>
+                      <div className="font-extrabold text-white">&lt; 15 см</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 2: КАТАЛОГ 10 ОБЪЕКТОВ */}
+          <section id="catalog-section" className="py-14 lg:py-20 border-b border-stone-800/80 bg-stone-900/25">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 mb-2">
+                    <Layers className="w-3.5 h-3.5" /> ПОЛНЫЙ ОБЛАЧНЫЙ ПАКЕТ S3 (10 МОДЕЛЕЙ 1:1)
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-black text-white">
+                    Каталог 10 реконструированных памятников архитектуры
+                  </h2>
+                  <p className="text-sm text-stone-400 mt-1">
+                    Каждое сооружение воссоздано по архивным чертежам с оптимизацией сетки до 25 000 треугольников и запеченными тенями.
+                  </p>
+                </div>
+
+                <div className="relative w-full lg:w-72">
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Поиск: Шехтель, Шухов, арка..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'Все 10 объектов',
+                  'Выставка и Ярмарка 1896',
+                  'Кремль и Рождественская',
+                  'Инженерные чудеса',
+                  'Бесплатные в демо'
+                ].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCatalogFilter(cat)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      catalogFilter === cat
+                        ? 'bg-amber-400 text-stone-950 shadow'
+                        : 'bg-stone-900 text-stone-300 border border-stone-800 hover:border-stone-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCatalogLocations.map((loc) => {
+                  const isSelected = activeLocation.id === loc.id;
+                  return (
+                    <div
+                      key={loc.id}
+                      className={`rounded-3xl bg-stone-900 border p-6 flex flex-col justify-between space-y-5 transition-all ${
+                        isSelected
+                          ? 'border-amber-400 shadow-xl shadow-amber-500/10'
+                          : 'border-stone-800 hover:border-stone-700'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="px-2.5 py-1 rounded-lg bg-stone-950 border border-stone-800 text-amber-400 text-xs font-black">
+                            Объект #{loc.number} • {loc.styleTag}
+                          </span>
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                              loc.isFreeDemo || isPremiumUnlocked
+                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                            }`}
+                          >
+                            {loc.isFreeDemo
+                              ? 'Бесплатно в демо'
+                              : isPremiumUnlocked
+                              ? 'Разблокировано'
+                              : 'В квесте 249 ₽'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-black text-white">{loc.title}</h3>
+                          <p className="text-xs font-semibold text-amber-400 mt-0.5">
+                            {loc.architect} • {loc.years}
+                          </p>
+                          <p className="text-[11px] text-stone-400 mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-stone-500 shrink-0" /> {loc.address}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-stone-300 leading-relaxed">{loc.summary}</p>
+                      </div>
+
+                      <div className="space-y-3 pt-3 border-t border-stone-800">
+                        <div className="grid grid-cols-3 gap-2 text-[11px] text-center">
+                          <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                            <div className="text-stone-500 text-[10px]">Сетка LOD0</div>
+                            <div className="font-bold text-white">{loc.triangles.LOD0} тр.</div>
+                          </div>
+                          <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                            <div className="text-stone-500 text-[10px]">Пакет S3</div>
+                            <div className="font-bold text-emerald-400">{loc.s3Size}</div>
+                          </div>
+                          <div className="p-2 rounded-xl bg-stone-950 border border-stone-800">
+                            <div className="text-stone-500 text-[10px]">Аудиогид</div>
+                            <div className="font-bold text-amber-400">{loc.audioDuration}</div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleSelectLocation(loc.id, true)}
+                          className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow cursor-pointer"
+                        >
+                          <Box className="w-4 h-4" />
+                          <span>Открыть 3D-модель в AR-камере ↑</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 3: ИНТЕРАКТИВНАЯ КАРТА */}
+          <section id="map-section" className="py-14 lg:py-20 border-b border-stone-800/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 mb-2">
+                    <Navigation className="w-3.5 h-3.5" /> ГЕОГРАФИЯ ПРОГУЛОК ПО НИЖНЕМУ НОВГОРОДУ
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-black text-white">
+                    Интерактивная карта 10 AR-точек и 5 кофеен-партнеров
+                  </h2>
+                  <p className="text-sm text-stone-400 mt-1">
+                    Нажимайте на маркеры зданий и кофеен на карте Стрелки, Ярмарки, улицы Рождественской и Кремля.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 bg-stone-900 p-1.5 rounded-2xl border border-stone-800">
+                  {[
+                    { id: 'all', label: 'Все 10 локаций + 5 кофеен' },
+                    { id: 'route-1896', label: 'Маршрут «Ярмарка и Выставка 1896»' },
+                    { id: 'route-kremlin', label: 'Маршрут «Рождественская и Кремль»' }
+                  ].map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => setActiveMapRoute(r.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeMapRoute === r.id
+                          ? 'bg-amber-400 text-stone-950 shadow'
+                          : 'text-stone-300 hover:text-white'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="lg:col-span-8 rounded-3xl bg-stone-900 border border-stone-800 overflow-hidden shadow-xl">
+                  <div className="px-5 py-3.5 border-b border-stone-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-bold text-stone-200 flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-amber-400" /> Стрелка Оки и Волги • Ярмарка • Рождественская • Кремль
+                    </span>
+                    <div className="flex items-center gap-4 text-[11px]">
+                      <span className="flex items-center gap-1.5 text-amber-300 font-bold">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> 10 AR-зданий
+                      </span>
+                      <span className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> 5 Кофеен (-10%)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="relative w-full h-[420px] sm:h-[460px] bg-stone-950 overflow-hidden select-none">
+                    <svg className="w-full h-full" viewBox="0 0 800 460" preserveAspectRatio="none">
+                      <rect width="800" height="460" fill="#141210" />
+                      <g stroke="#262320" strokeWidth="1">
+                        {[100, 200, 300, 400, 500, 600, 700].map((x) => (
+                          <line key={x} x1={x} y1="0" x2={x} y2="460" />
+                        ))}
+                        {[90, 180, 270, 360].map((y) => (
+                          <line key={y} x1="0" y1={y} x2="800" y2={y} />
+                        ))}
+                      </g>
+
+                      <path
+                        d="M0,0 L800,0 L800,115 Q520,105 330,130 Q180,145 0,95 Z"
+                        fill="#0c2536"
+                      />
+                      <path
+                        d="M275,120 Q325,245 215,460 L320,460 Q410,245 370,120 Z"
+                        fill="#0c2536"
+                      />
+
+                      <text x="510" y="55" fill="#38bdf8" opacity="0.45" fontSize="14" fontWeight="bold" letterSpacing="4">
+                        РЕКА ВОЛГА
+                      </text>
+                      <text x="250" y="410" fill="#38bdf8" opacity="0.45" fontSize="13" fontWeight="bold" letterSpacing="3">
+                        РЕКА ОКА
+                      </text>
+                      <text x="65" y="190" fill="#78716c" fontSize="11" fontWeight="bold">
+                        НИЖЕГОРОДСКАЯ ЯРМАРКА И ВЫСТАВКА 1896
+                      </text>
+                      <text x="410" y="215" fill="#78716c" fontSize="11" fontWeight="bold">
+                        УЛ. РОЖДЕСТВЕНСКАЯ
+                      </text>
+                      <text x="580" y="185" fill="#78716c" fontSize="11" fontWeight="bold">
+                        НИЖЕГОРОДСКИЙ КРЕМЛЬ
+                      </text>
+
+                      <polyline
+                        points={mapLocations
+                          .map((l) => `${(l.mapCoords.x / 100) * 800},${(l.mapCoords.y / 100) * 460}`)
+                          .join(' ')}
+                        fill="none"
+                        stroke="#f59e0b"
+                        strokeWidth="2.5"
+                        strokeDasharray="6 6"
+                        opacity="0.7"
+                      />
+                    </svg>
+
+                    {PARTNER_CAFES.map((cafe) => (
+                      <button
+                        key={cafe.id}
+                        onClick={() => setActiveCafeCoupon(cafe)}
+                        style={{ left: `${cafe.mapCoords.x}%`, top: `${cafe.mapCoords.y}%` }}
+                        title={`${cafe.name} (-10%)`}
+                        className="absolute -translate-x-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-emerald-500/90 hover:bg-emerald-400 text-stone-950 flex items-center justify-center shadow-lg border-2 border-stone-950 transition-transform hover:scale-110 cursor-pointer"
+                      >
+                        <Coffee className="w-3.5 h-3.5" />
+                      </button>
+                    ))}
+
+                    {mapLocations.map((loc) => {
+                      const isActive = activeLocation.id === loc.id;
+                      return (
+                        <button
+                          key={loc.id}
+                          onClick={() => handleSelectLocation(loc.id, false)}
+                          style={{ left: `${loc.mapCoords.x}%`, top: `${loc.mapCoords.y}%` }}
+                          className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shadow-lg ${
+                            isActive
+                              ? 'bg-amber-400 text-stone-950 ring-4 ring-amber-400/40 scale-110 z-30'
+                              : 'bg-stone-900/95 text-stone-200 border border-amber-500/60 hover:bg-stone-800'
+                          }`}
+                        >
+                          <span className="w-4 h-4 rounded-full bg-stone-950 text-amber-400 text-[10px] flex items-center justify-center font-black">
+                            {loc.number}
+                          </span>
+                          <span className="hidden sm:inline whitespace-nowrap">{loc.shortTitle}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 p-6 rounded-3xl bg-stone-900 border border-stone-800 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 text-xs font-extrabold">
+                      Точка #{activeLocation.number} на карте
+                    </span>
+                    <span className="text-xs text-stone-400">{activeLocation.scale}</span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-black text-white">{activeLocation.title}</h3>
+                    <p className="text-xs text-amber-400 font-semibold mt-1">
+                      {activeLocation.architect} • {activeLocation.years}
+                    </p>
+                    <p className="text-xs text-stone-400 mt-0.5">{activeLocation.address}</p>
+                  </div>
+
+                  <p className="text-xs text-stone-300 leading-relaxed">{activeLocation.summary}</p>
+
+                  <div className="p-3.5 rounded-2xl bg-stone-950 border border-stone-800 text-xs space-y-1">
+                    <div className="font-bold text-amber-400">Историческая деталь:</div>
+                    <p className="text-stone-300 leading-relaxed">{activeLocation.curiousFact}</p>
+                  </div>
+
+                  <button
+                    onClick={() => handleSelectLocation(activeLocation.id, true)}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>Запустить 3D-реконструкцию этой точки ↑</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 4: КОФЕЙНИ */}
+          <section id="cafes-section" className="py-14 lg:py-20 border-b border-stone-800/80 bg-stone-900/25">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mb-2">
+                    <Coffee className="w-3.5 h-3.5" /> ГЕЙМИФИКАЦИЯ ПРОГУЛОК И B2B-ПАРТНЕРЫ
+                  </div>
+                  <h2 className="text-2xl sm:text-4xl font-black text-white">
+                    Ищите детали на 3D-фасадах — получайте скидку 10% в 5 кофейнях
+                  </h2>
+                  <p className="text-sm text-stone-400 mt-1">
+                    Каждая пройденная локация маршрута открывает промокод на скидку в уютных кофейнях исторического центра.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {PARTNER_CAFES.map((cafe) => (
+                  <div
+                    key={cafe.id}
+                    className="p-5 rounded-3xl bg-stone-900 border border-stone-800 hover:border-emerald-500/40 flex flex-col justify-between space-y-4 transition-all"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold">
+                          Скидка {cafe.discount}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs font-bold text-amber-400">
+                          <Star className="w-3.5 h-3.5 fill-current" /> {cafe.rating}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-white">{cafe.name}</h3>
+                      <p className="text-[11px] text-stone-400">{cafe.address}</p>
+                      <p className="text-xs text-stone-300 bg-stone-950 p-2.5 rounded-xl border border-stone-800">
+                        {cafe.specialty}
+                      </p>
+                      <div className="text-[11px] text-emerald-400 font-semibold">
+                        Рядом: {cafe.nearLocation}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setActiveCafeCoupon(cafe)}
+                      className="w-full py-2.5 rounded-xl bg-stone-950 hover:bg-stone-800 border border-amber-400/50 text-amber-300 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Открыть купон</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 5: ТЕХНОЛОГИЯ */}
+          <section id="tech-section" className="py-14 lg:py-20 border-b border-stone-800/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+              <div className="text-center max-w-3xl mx-auto space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  <Cpu className="w-3.5 h-3.5" /> ИНЖЕНЕРНОЕ ЯДРО И ОПТИМИЗАЦИЯ
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-black text-white">
+                  Почему «ХрониAR» работает плавно на любом смартфоне
+                </h2>
+                <p className="text-sm text-stone-400">
+                  Мы решили главную проблему туристических AR-приложений — гигантский размер установочного файла и дрожание 3D-объектов.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {[
+                  {
+                    metric: '45 МБ',
+                    title: 'Вес APK-клиента в RuStore',
+                    vs: 'Вместо 2,5 ГБ у обычных 3D-гидов',
+                    desc: 'Все 10 тяжелых архитектурных сцен хранятся в облачном бакете S3 и подгружаются по мере прогулки.'
+                  },
+                  {
+                    metric: '< 15 см',
+                    title: 'Точность геопривязки VPS',
+                    vs: 'Вместо 15 м погрешности GPS',
+                    desc: 'Алгоритм Visual Positioning System сопоставляет кадр камеры с контурами соседних исторических домов.'
+                  },
+                  {
+                    metric: '1,5 сек',
+                    title: 'Загрузка точки по сети 4G',
+                    vs: 'Архивация пакетов LZ4',
+                    desc: 'Запеченные карты света и теней (Baked Lightmaps) позволяют мгновенно открывать фасад без нагрузки на чип.'
+                  },
+                  {
+                    metric: '60 FPS',
+                    title: 'Плавность рендеринга',
+                    vs: 'Система LOD0–LOD2 и ASTC',
+                    desc: 'Строгий бюджет 25 000 треугольников на здание и адаптивные уровни детализации берегут заряд батареи.'
+                  }
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="p-6 rounded-3xl bg-stone-900 border border-stone-800 space-y-3 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="text-3xl sm:text-4xl font-black text-amber-400">{item.metric}</div>
+                      <h3 className="text-base font-extrabold text-white">{item.title}</h3>
+                      <div className="inline-block px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 text-[11px] font-bold">
+                        {item.vs}
+                      </div>
+                    </div>
+                    <p className="text-xs text-stone-400 leading-relaxed pt-2 border-t border-stone-800">
+                      {item.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 6: ТАРИФЫ */}
+          <section id="pricing-section" className="py-14 lg:py-20 border-b border-stone-800/80 bg-stone-900/30">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  ТАРИФЫ И МГНОВЕННАЯ ОПЛАТА ПО СБП
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-black text-white">
+                  Индивидуальная AR-экскурсия в 12 раз доступнее частного гида
+                </h2>
+                <p className="text-sm text-stone-400">
+                  Обычная индивидуальная экскурсия стоит 2 500–3 500 ₽. Полный сюжетный квест «ХрониAR» по всем 10 объектам стоит всего 249 ₽.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch max-w-4xl mx-auto">
+                <div className="p-7 rounded-3xl bg-stone-900 border border-stone-800 flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-stone-800 text-stone-300">
+                        Обзорный режим
+                      </span>
+                      <span className="text-xs text-emerald-400 font-bold">Доступен сразу</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white">Бесплатное демо</h3>
+                      <div className="text-4xl font-black text-white mt-2">0 ₽</div>
+                    </div>
+                    <p className="text-xs sm:text-sm text-stone-300">
+                      Познакомьтесь с технологией 3D-реконструкции 1:1 и шторкой времени на ключевых точках центра.
+                    </p>
+                    <ul className="space-y-2.5 text-xs text-stone-200 pt-2">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>3 базовые 3D-локации в масштабе 1:1</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Интерактивная шторка «1896 ↔ Наши дни»</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Краткая текстовая историческая справка</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => scrollToSection('simulator-section')}
+                    className="w-full py-3.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-extrabold text-xs sm:text-sm cursor-pointer"
+                  >
+                    Попробовать бесплатно в симуляторе ↑
+                  </button>
+                </div>
+
+                <div className="p-7 rounded-3xl bg-gradient-to-b from-stone-900 via-stone-900 to-amber-950/35 border-2 border-amber-400 shadow-2xl flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-stone-950">
+                        Выбор 83% туристов
+                      </span>
+                      <span className="text-xs text-amber-300 font-bold">Вместо 3 000 ₽ гиду</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white">Полный сюжетный квест</h3>
+                      <div className="flex items-baseline gap-2 mt-2">
+                        <span className="text-4xl font-black text-amber-400">249 ₽</span>
+                        <span className="text-xs text-stone-400 line-through">2 500 ₽</span>
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-stone-200">
+                      Полный доступ ко всем 10 архитектурным шедеврам, дикторскому аудиогиду, викторине и 5 купонам кофеен.
+                    </p>
+                    <ul className="space-y-2.5 text-xs text-stone-100 pt-2">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Все 10 детальных 3D-реконструкций 1:1 из облака S3</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>45 минут профессиональной дикторской озвучки</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Интерактивный квест с поиском деталей на фасадах</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Скидка 10% во всех 5 кофейнях-партнерах (окупает маршрут!)</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => setShowSbpModal(true)}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 font-black text-xs sm:text-sm shadow-lg cursor-pointer"
+                  >
+                    {isPremiumUnlocked
+                      ? '✓ Полный доступ уже активирован'
+                      : 'Купить по СБП / YooKassa • 249 ₽'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* СЕКЦИЯ 7: FAQ */}
+          <section className="py-14 lg:py-20 border-b border-stone-800/80">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-white">
+                  Частые вопросы о платформе «ХрониAR»
+                </h2>
+                <p className="text-sm text-stone-400">Ответы о работе приложения, трафике и купонах</p>
+              </div>
+
+              <div className="space-y-3">
+                {FAQ_ITEMS.map((item, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
+                        className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 cursor-pointer"
+                      >
+                        <span className="font-bold text-sm sm:text-base text-white">{item.q}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-amber-400 shrink-0 transition-transform ${
+                            isOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div className="px-5 pb-4 text-xs sm:text-sm text-stone-300 leading-relaxed border-t border-stone-800/70 pt-3">
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* МОДАЛЬНЫЕ ОКНА */}
+          {showSbpModal && (
+            <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-700 p-6 space-y-5 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <QrCode className="w-5 h-5 text-amber-400" />
+                    <span className="font-extrabold text-white">Оплата по СБП / YooKassa</span>
+                  </div>
+                  <button
+                    onClick={() => setShowSbpModal(false)}
+                    className="text-stone-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="text-center space-y-1">
+                  <div className="text-xs text-stone-400">Полный сюжетный квест-маршрут (10 зданий 1:1)</div>
+                  <div className="text-3xl font-black text-amber-400">249 ₽</div>
+                </div>
+
+                <div className="mx-auto w-44 h-44 rounded-2xl bg-white p-3 flex flex-col items-center justify-center shadow-inner">
+                  <QrCode className="w-32 h-32 text-stone-950" />
+                  <span className="text-[10px] font-bold text-stone-900 mt-1">
+                    СБП • Мгновенное зачисление
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setIsPremiumUnlocked(true);
+                      setUnlockedTicketCode('HRONIAR-VIP-1896');
+                      setShowSbpModal(false);
+                    }}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-stone-950 font-black text-sm shadow-lg cursor-pointer"
+                  >
+                    Подтвердить тестовую оплату (Разблокировать все 10)
+                  </button>
+                  <p className="text-[11px] text-center text-stone-400">
+                    Сразу открывает все 10 памятников, дикторский аудиогид и 5 купонов кофеен.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeCafeCoupon && (
+            <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-700 p-6 space-y-5 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Coffee className="w-5 h-5 text-amber-400" />
+                    <span className="font-extrabold text-white">Купон гостя «ХрониAR»</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveCafeCoupon(null)}
+                    className="text-stone-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="text-center space-y-1.5">
+                  <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300">
+                    Скидка {activeCafeCoupon.discount} на всё меню
+                  </span>
+                  <h4 className="text-xl font-black text-white pt-1">{activeCafeCoupon.name}</h4>
+                  <p className="text-xs text-stone-400">{activeCafeCoupon.address}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-stone-950 border border-dashed border-amber-400/60 text-center space-y-2">
+                  <div className="text-[11px] text-stone-400">Покажите промокод бариста на кассе:</div>
+                  <div className="text-2xl font-black tracking-wider text-amber-400">
+                    {activeCafeCoupon.promoCode}
+                  </div>
+                  <button
+                    onClick={() => handleCopyCode(activeCafeCoupon.promoCode)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-amber-400 text-stone-950 text-xs font-extrabold cursor-pointer"
+                  >
+                    {copiedPromo === activeCafeCoupon.promoCode ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" /> Скопировано!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" /> Скопировать код
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-center text-stone-400">
+                  Фирменный выбор: {activeCafeCoupon.specialty}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {showRuStoreModal && (
+            <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="w-full max-w-lg rounded-3xl bg-stone-900 border border-stone-700 p-6 space-y-5 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-xs">
+                      Ru
+                    </div>
+                    <span className="font-extrabold text-white">Официальный релиз в RuStore</span>
+                  </div>
+                  <button
+                    onClick={() => setShowRuStoreModal(false)}
+                    className="text-stone-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shrink-0">
+                    <Compass className="w-9 h-9 text-stone-950" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-black text-white">ХрониAR: Архитектура 1:1</h4>
+                    <p className="text-xs text-stone-400">Версия 1.0 • Туризм и AR-квесты • Нижний Новгород</p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs font-bold">
+                      <span className="text-amber-400 flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-current" /> 4.9
+                      </span>
+                      <span className="text-emerald-400">Вес APK: 45 МБ</span>
+                      <span className="text-stone-300">60 FPS • S3 Cloud</span>
+                    </div>
+                  </div>
+                </div>
+
+                {apkDownloaded ? (
+                  <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center">
+                    ✓ Установочный пакет «ХрониAR» (45 МБ) успешно скачан!
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsDownloadingApk(true);
+                      setTimeout(() => {
+                        setIsDownloadingApk(false);
+                        setApkDownloaded(true);
+                      }, 1000);
+                    }}
+                    disabled={isDownloadingApk}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-stone-950 font-extrabold text-sm shadow-lg cursor-pointer"
+                  >
+                    {isDownloadingApk ? 'Загрузка APK (45 МБ)...' : 'Скачать бесплатно из RuStore (45 МБ)'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ПОДВАЛ */}
+          <footer className="bg-stone-950 py-10 border-t border-stone-800/80">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center text-stone-950 font-black">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <span className="font-bold text-white">ХрониAR</span>
+                <span>— Мобильная AR-платформа 3D-реконструкции архитектуры Нижнего Новгорода 1:1</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <button onClick={() => scrollToSection('simulator-section')} className="hover:text-amber-400 cursor-pointer">
+                  3D-Симулятор (10 зданий)
+                </button>
+                <button onClick={() => scrollToSection('catalog-section')} className="hover:text-amber-400 cursor-pointer">
+                  Каталог объектов
+                </button>
+                <button onClick={() => scrollToSection('map-section')} className="hover:text-amber-400 cursor-pointer">
+                  Карта маршрутов
+                </button>
+                <button onClick={() => setShowRuStoreModal(true)} className="hover:text-amber-400 cursor-pointer">
+                  RuStore (45 МБ)
+                </button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
